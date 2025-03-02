@@ -83,6 +83,23 @@ dependencies {
     implementation("com.google.android.gms:play-services-auth:20.7.0") // ✅ Google Sign-In
 
     implementation("io.coil-kt:coil-compose:2.5.0")
+    implementation("org.tensorflow:tensorflow-lite:2.5.0")
+
+    // Accompanist for Compose (for Scrollable TabRow if needed)
+    implementation("com.google.accompanist:accompanist-pager:0.28.0")
+    implementation("com.google.accompanist:accompanist-pager-indicators:0.28.0")
+
+    // Jetpack Compose Charts Library (Bar Charts, Line Charts)
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+
+
+    // Circular Progress & Foundation
+    implementation ("androidx.compose.foundation:foundation:1.5.0")
+
+    // KotlinX Coroutines (for Data Updates in Graphs)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
+
+
 
 }
 kapt{
