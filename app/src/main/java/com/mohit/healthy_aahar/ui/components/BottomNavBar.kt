@@ -29,6 +29,7 @@ fun BottomNavBar(navController: NavController, isVisible: Boolean) {
     val navItems = listOf(
         BottomNavItem("Home", Screen.Home.route, Icons.Filled.Home),
         BottomNavItem("Diet Plan", Screen.DietPlan.route, Icons.Filled.Restaurant),
+        BottomNavItem("Statistics", Screen.StatisticsScreen.route, Icons.Filled.Analytics),
         BottomNavItem("Recipes", Screen.RecipeGenerator.route, Icons.Filled.Fastfood),
         BottomNavItem("Profile", Screen.Profile.route, Icons.Filled.Person)
     )

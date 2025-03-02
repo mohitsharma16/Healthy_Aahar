@@ -13,6 +13,7 @@ sealed class Screen(val route: String) {
     object RecipeGenerator : Screen("recipe_generator_screen")
     object FoodLogging : Screen("food_logging_screen")
     object MealHistory : Screen("meal_history_screen")
+    object StatisticsScreen : Screen("statistics_screen")
     object NutritionalAnalysis : Screen("nutritional_analysis_screen")
 
     // **Profile & Settings Screens**

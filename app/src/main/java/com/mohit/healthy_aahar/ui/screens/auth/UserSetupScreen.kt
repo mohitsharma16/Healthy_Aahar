@@ -1,8 +1,13 @@
 package com.mohit.healthy_aahar.ui.screens.auth
 
+import android.content.Context
+import android.content.res.AssetFileDescriptor
+import android.content.res.AssetManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,21 +18,28 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.tensorflow.lite.Interpreter
+import java.io.FileInputStream
+import java.nio.MappedByteBuffer
+import java.nio.channels.FileChannel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserSetupScreen(onSetupComplete: () -> Unit) { // 🔹 Changed from NavController to Lambda
     var step by remember { mutableStateOf(1) }
+    //User Inputs
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
     var age by remember { mutableStateOf("") }
     var gender by remember { mutableStateOf("") }
     var weight by remember { mutableStateOf("") }
     var height by remember { mutableStateOf("") }
-    var dietPreference by remember { mutableStateOf("Keto") }
+    var goal by remember { mutableStateOf("Maintain") }
     var timePeriod by remember { mutableStateOf("1 Month") }
-    var allergies by remember { mutableStateOf("Nut") }
-
+    var allergies by remember { mutableStateOf("None") }
+    var estimatedCalories by remember { mutableStateOf("") }
+    val scrollState = rememberScrollState()
+    val context = LocalContext.current
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("User Setup") })
@@ -38,7 +50,8 @@ fun UserSetupScreen(onSetupComplete: () -> Unit) { // 🔹 Changed from NavContr
                 .fillMaxSize()
                 .padding(contentPadding)
                 .padding(16.dp)
-                .background(Color.White),
+                .background(Color.White)
+                .verticalScroll(scrollState),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text("Healthy Aahar", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8B4513))
@@ -57,14 +70,17 @@ fun UserSetupScreen(onSetupComplete: () -> Unit) { // 🔹 Changed from NavContr
                     UserInputField("Weight", weight) { weight = it }
                     UserInputField("Height", height) { height = it }
                     Text("Diet Preference:", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                    RadioButtonGroup(selectedValue = dietPreference, options = listOf("Keto", "Vegan", "Vegetarian", "Paleo")) { dietPreference = it }
+                    RadioButtonGroup(selectedValue = goal, options = listOf("Weight Loss", "Maintain", "Weight Gain")) { goal = it }
                 }
                 3 -> {
                     Text("Select Time Period:", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     RadioButtonGroup(selectedValue = timePeriod, options = listOf("1 Month", "3 Months", "6 Months", "1 Year")) { timePeriod = it }
                     Text("Any Allergies?", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                    RadioButtonGroup(selectedValue = allergies, options = listOf("Nut", "Dairy", "Gluten", "Soy")) { allergies = it }
-                }
+                    RadioButtonGroup(selectedValue = allergies, options = listOf("Nut", "Dairy", "Gluten", "Soy","None" )) { allergies = it }
+
+                    //display estimated calories
+                    Text("Estimated Daily Calorie Intake:", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text(text = estimatedCalories.ifEmpty { "Not calculated yet" }, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.Blue) }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -84,13 +100,57 @@ fun UserSetupScreen(onSetupComplete: () -> Unit) { // 🔹 Changed from NavContr
                         Text("Next")
                     }
                 } else {
-                    Button(onClick = { onSetupComplete() }, colors = ButtonDefaults.buttonColors(Color(0xFF8B4513))) {
+                    Button(
+                        onClick = { estimatedCalories = predictCalories(context, height, weight, age, gender, goal) },
+                        colors = ButtonDefaults.buttonColors(Color(0xFF8B4513))
+                    ) {
+                        Text("Calculate")
+                    }
+                    Button(
+                        onClick = { onSetupComplete() },
+                        colors = ButtonDefaults.buttonColors(Color(0xFF8B4513))
+                    ) {
                         Text("Submit")
                     }
+                }
                 }
             }
         }
     }
+
+
+// load the tflite model
+fun loadModelFile(assetManager: AssetManager, modelPath: String): MappedByteBuffer{
+    val assetFileDescriptor : AssetFileDescriptor = assetManager.openFd(modelPath)
+    val fileInputStream = FileInputStream(assetFileDescriptor.fileDescriptor)
+    val fileChannel = fileInputStream.channel
+    return fileChannel.map(FileChannel.MapMode.READ_ONLY, assetFileDescriptor.startOffset, assetFileDescriptor.declaredLength)
+}
+
+// function to predict calories using tflite
+fun predictCalories(context: Context, height: String, weight :String, age:String, gender: String, goal:String): String{
+    return try{
+        val interpreter = Interpreter(loadModelFile(context.assets, "calorie_intake_model.tflite"))
+        val heightFloat = height.toFloatOrNull() ?: return "Invalid Input"
+        val weightFloat = weight.toFloatOrNull() ?: return "Invalid Input"
+        val ageFloat = age.toFloatOrNull() ?: return "Invalid Input"
+        val genderFloat = if(gender.lowercase() == "male") 1f else 0f
+        val goalFloat = when (goal) {
+            "Weight Loss" -> -1f
+            "Maintain" -> 0f
+            "Weight Gain" -> 1f
+            else -> return "Invalid Goal"
+        }
+
+        val input = arrayOf(floatArrayOf(heightFloat, weightFloat, ageFloat, genderFloat, goalFloat))
+        val output = Array(1) { FloatArray(1) }
+
+        interpreter.run(input, output)
+        output[0][0].toInt().toString() + "Kcal"
+    }catch (e: Exception){
+        "Error: ${e.message}"
+    }
+
 }
 
 // **Reusable Input Field Component**

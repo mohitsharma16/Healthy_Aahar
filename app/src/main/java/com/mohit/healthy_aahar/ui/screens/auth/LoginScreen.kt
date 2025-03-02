@@ -122,18 +122,21 @@ fun LoginScreen(navController:NavController) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // **Sign Up with Google Button**
-                AuthButton(
-                    text = "Sign Up with Google",
-                    onClick = { /* Handle Google Sign Up */ }
-                )
+
+//                AuthButton(
+//                    text = "Sign Up with Google",
+//                    onClick = {
+//                        navController.navigate(Screen.UserSetup.route) { // 🔹 Navigate to UserSetup
+//                        popUpTo(Screen.Signup.route) { inclusive = true }
+//                    }}
+//                )
 
                 // **Login Button**
                 AuthButton(
-                    text = "Login",
+                    text = "START",
                     onClick =  {
-                        navController.navigate(Screen.UserSetup.route) { // 🔹 Navigate to UserSetup
-                            popUpTo(Screen.Login.route) { inclusive = true }
+                        navController.navigate(Screen.Signup.route) { // 🔹 Navigate to UserSetup
+                            popUpTo(Screen.Signup.route) { inclusive = true }
                         }
                     }
                 )
