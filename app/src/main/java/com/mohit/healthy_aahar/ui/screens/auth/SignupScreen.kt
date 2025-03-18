@@ -52,7 +52,6 @@ fun SignupScreen(navController: NavController, authViewModel: AuthViewModel = vi
 
     // Observe the auth state changes
     val authState by authViewModel.authState.collectAsState()
-
     // Handle navigation & messages based on auth state
     LaunchedEffect(authState) {
         when (authState) {
