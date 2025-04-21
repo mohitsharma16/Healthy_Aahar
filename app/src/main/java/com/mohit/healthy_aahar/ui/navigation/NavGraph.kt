@@ -4,21 +4,31 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.google.firebase.auth.oAuthCredential
+import com.mohit.healthy_aahar.repository.AuthRepository
 import com.mohit.healthy_aahar.ui.screens.auth.*
 import com.mohit.healthy_aahar.ui.screens.main.*
 import com.mohit.healthy_aahar.ui.screens.profile.*
 
 @Composable
-fun AppNavGraph(navController: NavHostController) {
-    NavHost(navController = navController, startDestination = Screen.Onboarding.route) {
+fun AppNavGraph(navController: NavHostController , authRepository: AuthRepository) {
+    NavHost(navController = navController,
+        startDestination = Screen.Onboarding.route, ) {
 
         // **Onboarding & Authentication Flow**
         composable(Screen.Onboarding.route) {
-            OnboardingScreen {
-                navController.navigate(Screen.Login.route) {
-                    popUpTo(Screen.Onboarding.route) { inclusive = true } // 🔹 Clears Onboarding from back stack
+            OnboardingScreen( onComplete = {
+                val user = authRepository.getCurrentUser()
+                if (user != null) {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo("onboarding") { inclusive = true }
+                    }
+                } else {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo("onboarding") { inclusive = true }
+                    }
                 }
-            }
+            })
         }
         composable(Screen.Login.route) {
             LoginScreen(navController)

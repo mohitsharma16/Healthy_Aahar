@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.NavDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.mohit.healthy_aahar.repository.AuthRepository
 import com.mohit.healthy_aahar.ui.components.BottomNavBar
 import com.mohit.healthy_aahar.ui.navigation.AppNavGraph
 import com.mohit.healthy_aahar.ui.navigation.Screen
@@ -17,6 +18,7 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private val authRepository = AuthRepository()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -42,7 +44,7 @@ class MainActivity : ComponentActivity() {
                         .fillMaxSize()
                         .padding(innerPadding)
                 ) {
-                    AppNavGraph(navController)
+                    AppNavGraph(navController, authRepository)
                 }
             }
         }

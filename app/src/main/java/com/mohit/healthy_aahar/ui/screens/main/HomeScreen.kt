@@ -1,5 +1,6 @@
 package com.mohit.healthy_aahar.ui.screens.main
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,19 +15,24 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.mohit.healthy_aahar.R
 import com.mohit.healthy_aahar.ui.navigation.Screen
+import com.mohit.healthy_aahar.ui.viewmodel.MainViewModel
+
 
 @Composable
 fun HomeScreen(navController: NavController) {
@@ -57,6 +63,7 @@ fun HomeScreen(navController: NavController) {
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+
 
         // **User Profile Section**
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -92,6 +99,30 @@ fun HomeScreen(navController: NavController) {
 
         // **Highlighted Meal Card**
         MealCard(navController)
+    }
+}
+@Composable
+fun MealSwapTestScreen(userName: String) {
+    val viewModel: MainViewModel = viewModel()
+    val registerResponse by viewModel.registerResponse.observeAsState()
+    val error by viewModel.error.observeAsState()
+
+    LaunchedEffect(registerResponse) {
+        registerResponse?.let {
+            Log.d("SWAP_TEST", it)
+            viewModel.clearMessages()
+        }
+    }
+
+    LaunchedEffect(error) {
+        error?.let {
+            Log.e("SWAP_TEST", "Error: $it")
+            viewModel.clearMessages()
+        }
+    }
+
+    Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+        Spacer(modifier = Modifier.height(32.dp))
     }
 }
 

@@ -1,7 +1,9 @@
 package com.mohit.healthy_aahar.ui.screens.main
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -10,21 +12,41 @@ import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
+import androidx.compose.material3.CardDefaults.cardElevation
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
+import com.mohit.healthy_aahar.model.Meal
 import com.mohit.healthy_aahar.ui.navigation.Screen
+import com.mohit.healthy_aahar.ui.viewmodel.MainViewModel
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mohit.healthy_aahar.datastore.UserPreference
+import com.mohit.healthy_aahar.model.LogMealRequest
+
 
 @Composable
 fun DietPlanScreen(navController: NavController) {
     var selectedTab by remember { mutableStateOf(0) }
+    val mainViewModel: MainViewModel = viewModel()
+    val mealPlanState by mainViewModel.mealPlan.observeAsState()
+    // Trigger once on first composition
+    LaunchedEffect(Unit) {
+        mainViewModel.getMealPlan("sourabh aharma") // Replace with actual user name
+    }
+
 
     Column(
         modifier = Modifier
@@ -60,7 +82,7 @@ fun DietPlanScreen(navController: NavController) {
 
         // **Display Selected Content Based on Tab**
         when (selectedTab) {
-            0 -> PersonalizedDietPlan()
+            0 -> PersonalizedDietPlan(mealPlanState?.meal_plan ?: emptyList())
             1 -> DailyNutritionOverview()
             2 -> MealLoggingForm()
         }
@@ -69,7 +91,8 @@ fun DietPlanScreen(navController: NavController) {
 
 // **Tab Component**
 @Composable
-fun DietPlanTab(icon: androidx.compose.ui.graphics.vector.ImageVector, isSelected: Boolean, onClick: () -> Unit) {
+fun DietPlanTab(icon: androidx.compose.ui.graphics.vector.ImageVector, isSelected: Boolean, onClick: () -> Unit, ) {
+
     IconButton(onClick = onClick) {
         Icon(
             imageVector = icon,
@@ -82,7 +105,7 @@ fun DietPlanTab(icon: androidx.compose.ui.graphics.vector.ImageVector, isSelecte
 
 // **Tab 1: Personalized Diet Plan**
 @Composable
-fun PersonalizedDietPlan() {
+fun PersonalizedDietPlan(mealPlan: List<Meal>) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -111,23 +134,100 @@ fun PersonalizedDietPlan() {
                 .background(Color(0xFFC5E6DA), shape = RoundedCornerShape(16.dp))
                 .padding(16.dp)
         ) {
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    NutrientCard("Carbs", "0")
+                    NutrientCard("Protein", "0")
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    NutrientCard("Water", "0")
+                    NutrientCard("Calorie", "0")
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text("Recommended Recipes", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        mealPlan.forEach { meal ->
+            MealCard(meal)
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+    }
+}
+
+@Composable
+fun MealCard(meal: Meal) {
+    val viewModel: MainViewModel = viewModel()
+    val context = LocalContext.current
+    val uidFlow = remember { UserPreference.getUidFlow(context) }
+    val uid by uidFlow.collectAsState(initial = null)
+
+    val today = remember { java.time.LocalDate.now().toString() }
+
+
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFFDF6EC))
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(meal.TranslatedRecipeName, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text("Cuisine: ${meal.Cuisine}")
+            Text("Time: ${meal.TotalTimeInMins} mins")
+            Spacer(modifier = Modifier.height(4.dp))
+            Text("🔥 ${meal.Calories} kcal | 🥩 ${meal.Protein}g | 🧈 ${meal.Fat}g | 🍞 ${meal.Carbs}g")
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(meal.TranslatedInstructions.orEmpty(), fontSize = 13.sp, color = Color.Gray, maxLines = 3, overflow = TextOverflow.Ellipsis)
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                NutrientCard("Carbs", "0")
-                NutrientCard("Protein", "0")
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 50.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                NutrientCard("Water", "0")
-                NutrientCard("Calorie", "0")
+                // ✅ Log Button
+                Button(
+                    onClick = {
+                        uid?.let {
+                            // Call ViewModel function and show Toast after success
+                            viewModel.logMeal(it, meal._id, today) { success ->
+                                val msg = if (success) "Meal logged successfully!" else "Failed to log meal"
+                                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8D4A1D))
+                ) {
+                    Text("Log Meal", color = Color.White)
+                }
+
+                // 🔁 Swap Icon
+//                IconButton(onClick = {
+//                    viewModel.swapMeal(mealIndex = mealPlanIndex(meal)) // implement this part
+//                }) {
+//                    Icon(Icons.Default.Restaurant, contentDescription = "Swap Meal")
+//                }
             }
         }
     }
 }
+
 
 // **Tab 2: Daily Nutrition Overview**
 @Composable
@@ -181,6 +281,13 @@ fun DailyNutritionOverview() {
 // **Tab 3: Meal Logging Form**
 @Composable
 fun MealLoggingForm() {
+    val context = LocalContext.current
+    val mainViewModel: MainViewModel = viewModel()
+    val uidFlow = remember { UserPreference.getUidFlow(context) }
+    val uid by uidFlow.collectAsState(initial = null)
+
+    var customMealText by remember { mutableStateOf("") }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -188,21 +295,45 @@ fun MealLoggingForm() {
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Log Your Meals", fontSize = 20.sp, color = Color.Black)
+        Text("Log Your Custom Meal", fontSize = 20.sp, color = Color.Black)
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        MealInputField("Breakfast")
-        MealInputField("Lunch")
-        MealInputField("Dinner")
+        OutlinedTextField(
+            value = customMealText,
+            onValueChange = { customMealText = it },
+            label = { Text("Enter your meal") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color(0xFF8D4A1D),
+                focusedLabelColor = Color(0xFF8D4A1D)
+            )
+        )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        Button(onClick = { /* TODO: Log Meals */ }) {
-            Text("Log")
+        Button(
+            onClick = {
+                if (!customMealText.isNullOrBlank() && uid != null) {
+                    mainViewModel.logCustomMeal(
+                        uid = uid!!,
+                        date = java.time.LocalDate.now().toString(),
+                        description = customMealText.trim()
+                    )
+                    Toast.makeText(context, "Logging your meal...", Toast.LENGTH_SHORT).show()
+                    customMealText = ""
+                } else {
+                    Toast.makeText(context, "Please enter a meal", Toast.LENGTH_SHORT).show()
+                }
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8D4A1D))
+        ) {
+            Text("Log", color = Color.White)
         }
     }
 }
+
 
 // **Reusable Components**
 @Composable
@@ -262,9 +393,9 @@ fun MealInputField(label: String) {
         TextField(value = "", onValueChange = {})
     }
 }
-@Preview(showBackground = true)
-@Composable
-fun DietPlanScreenPreview() {
-    val navController = rememberNavController()
-    DietPlanScreen(navController)
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun DietPlanScreenPreview() {
+//    val navController = rememberNavController()
+//    DietPlanScreen(navController)
+//}
