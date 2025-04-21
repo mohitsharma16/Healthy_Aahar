@@ -103,7 +103,7 @@ fun DietPlanTab(icon: androidx.compose.ui.graphics.vector.ImageVector, isSelecte
     }
 }
 
-// **Tab 1: Personalized Diet Plan**
+// **Tab 1: Personalized Diet Plan wala tab**
 @Composable
 fun PersonalizedDietPlan(mealPlan: List<Meal>) {
     Column(
