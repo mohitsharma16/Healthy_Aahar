@@ -107,9 +107,7 @@ fun UserSetupScreen(onSetupComplete: () -> Unit) {
                 3 -> {
                     Text("Select your Activity Level:", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     RadioButtonGroup(selectedValue = activityLevel, options = listOf("sedentary", "light", "moderate", "active")) { activityLevel = it }
-//                    Text("Any Allergies?", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-//                    RadioButtonGroup(selectedValue = allergies, options = listOf("Nut", "Dairy", "Gluten", "Soy", "None")) { allergies = it }
-
+//
                     Text("Estimated Daily Calorie Intake:", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     Text(text = estimatedCalories.ifEmpty { "Not calculated yet" }, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.Blue)
                 }

@@ -4,11 +4,11 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,169 +19,243 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.mohit.healthy_aahar.R
+import com.mohit.healthy_aahar.ui.theme.GreenBackground
 
 @Composable
 fun NutritionalAnalysisScreen(navController: NavController) {
     Column(
         modifier = Modifier
-            .verticalScroll(rememberScrollState())
             .fillMaxSize()
-            .background(Color(0xFFF8E8D0)) // Soft background color
-            .padding(horizontal = 16.dp, vertical = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .verticalScroll(rememberScrollState())
     ) {
-        // **Back Button**
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = { navController.popBackStack() }) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // **Dish Image**
-        Box(
-            modifier = Modifier
-                .size(200.dp)
-                .clip(RoundedCornerShape(20.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_food_placeholder),
-                contentDescription = "Dish Image",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // **Dish Name**
-        Text(
-            text = "Mix Salad Vegetables",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.Black
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // **Nutritional Values**
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            NutritionalItem("Calories", "240", Color(0xFF68A063))
-            NutritionalItem("Protein", "19g", Color(0xFF5374A0))
-            NutritionalItem("Carbs", "5g", Color(0xFFB65C5C))
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // **Ingredients Section**
+        // Top header with back button and meal name
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(20.dp))
-                .background(Color.White)
-                .padding(16.dp),
-            contentAlignment = Alignment.CenterStart
+                .background(GreenBackground)
+                .padding(16.dp)
         ) {
-            Column {
-                // **Ingredients Title**
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back",
+                        tint = Color.White
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
                 Text(
-                    text = "Ingredients",
+                    text = "Scrambled eggs",
                     fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
+                    fontWeight = FontWeight.Medium,
+                    color = Color.White,
+                    modifier = Modifier.weight(1f)
                 )
+
+                IconButton(
+                    onClick = { /* Open menu */ },
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Menu,
+                        contentDescription = "Menu",
+                        tint = Color.White
+                    )
+                }
+            }
+        }
+
+        // Food image
+        Image(
+            painter = painterResource(id = R.drawable.ic_food_placeholder),
+            contentDescription = "Food Image",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(220.dp)
+        )
+
+        // Nutrition information row
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            NutrientInfoBar(
+                value = "25g",
+                label = "Protein",
+                barColor = Color(0xFF8EB989),
+                modifier = Modifier.weight(1f)
+            )
+
+            NutrientInfoBar(
+                value = "32g",
+                label = "Carbs",
+                barColor = Color(0xFF8EB989),
+                modifier = Modifier.weight(1f)
+            )
+
+            NutrientInfoBar(
+                value = "14g",
+                label = "Fats",
+                barColor = Color(0xFF8EB989),
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        // Ingredients section
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+        ) {
+            Text(
+                text = "Ingredients",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+
+            IngredientsList(
+                items = listOf(
+                    "2 eggs",
+                    "1 tbsp oil",
+                    "Pinch of salt",
+                    "Pinch of black pepper",
+                    "Green onion"
+                )
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Instructions section
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+        ) {
+            Text(
+                text = "Instructions",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+
+            InstructionsList(
+                items = listOf(
+                    "Crack the eggs into a bowl.",
+                    "Whisk them thoroughly with a fork or whisk until fully blended.",
+                    "(If you like them extra soft, add 1–2 tbsp milk.)",
+                    "Heat a non-stick pan over medium-low heat. Pour the eggs into the pan. Wait 10–15 seconds without touching.",
+                    "Gently use a spatula, pushing eggs from edges to center."
+                )
+            )
+        }
+
+        // Add spacer at the bottom for the navigation bar
+        Spacer(modifier = Modifier.height(80.dp))
+    }
+}
+
+@Composable
+fun NutrientInfoBar(
+    value: String,
+    label: String,
+    barColor: Color,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier.padding(horizontal = 4.dp)
+    ) {
+        Text(
+            text = value,
+            fontWeight = FontWeight.Medium,
+            fontSize = 16.sp
+        )
+
+        Text(
+            text = label,
+            fontSize = 14.sp,
+            color = Color.Gray
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Box(
+            modifier = Modifier
+                .width(2.dp)
+                .height(50.dp)
+                .background(barColor)
+                .align(Alignment.CenterHorizontally)
+        )
+    }
+}
+
+@Composable
+fun IngredientsList(items: List<String>) {
+    Column(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        items.forEach { item ->
+            Row(
+                verticalAlignment = Alignment.Top,
+                modifier = Modifier.padding(vertical = 4.dp)
+            ) {
                 Text(
-                    text = "6 healthy ingredients",
-                    fontSize = 14.sp,
-                    color = Color.Gray
+                    text = "• ",
+                    fontWeight = FontWeight.Bold
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // **Ingredients List**
-                IngredientItem(R.drawable.ic_shrimp, "Shrimp", "Briefly fried, adds instant sauce.")
-                IngredientItem(R.drawable.ic_strawberry, "Strawberry", "Natural sugar from this fruit.")
-                IngredientItem(R.drawable.ic_kale, "Kale", "Rich in nutrients & antioxidants.")
-                IngredientItem(R.drawable.ic_corn, "Corn", "A source of fiber & energy.")
+                Text(
+                    text = item,
+                    modifier = Modifier.padding(start = 4.dp)
+                )
             }
         }
     }
 }
 
-// **Reusable Nutritional Item Component**
 @Composable
-fun NutritionalItem(name: String, value: String, color: Color) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
+fun InstructionsList(items: List<String>) {
+    Column(
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Box(
-            modifier = Modifier
-                .size(8.dp, 40.dp)
-                .clip(RoundedCornerShape(50))
-                .background(color)
-        )
+        items.forEach { item ->
+            Row(
+                verticalAlignment = Alignment.Top,
+                modifier = Modifier.padding(vertical = 4.dp)
+            ) {
+                Text(
+                    text = "• ",
+                    fontWeight = FontWeight.Bold
+                )
 
-        Spacer(modifier = Modifier.width(8.dp))
-
-        Text(
-            text = "$value $name",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.Black
-        )
-    }
-}
-
-// **Reusable Ingredient Item Component**
-@Composable
-fun IngredientItem(imageId: Int, title: String, description: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Image(
-            painter = painterResource(id = imageId),
-            contentDescription = title,
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-        )
-
-        Spacer(modifier = Modifier.width(12.dp))
-
-        Column {
-            Text(
-                text = title,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black
-            )
-            Text(
-                text = description,
-                fontSize = 14.sp,
-                color = Color.Gray
-            )
+                Text(
+                    text = item,
+                    modifier = Modifier.padding(start = 4.dp)
+                )
+            }
         }
     }
 }
 
-// **🔹 Nutritional Analysis Screen Preview**
 @Preview(showBackground = true)
 @Composable
 fun NutritionalAnalysisScreenPreview() {
