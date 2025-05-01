@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">192.168.32.6</domain>
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">healthyaaharbackend-production.up.railway.app</domain>
     </domain-config>
 </network-security-config>
