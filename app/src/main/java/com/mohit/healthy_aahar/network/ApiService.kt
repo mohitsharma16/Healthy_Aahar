@@ -10,12 +10,12 @@ interface ApiService {
     @POST("register_user")
     suspend fun registerUser(@Body user: User): Response<Map<String, Any>>
 
-    @GET("generate_meal_plan/{user_name}")
-    suspend fun generateMealPlan(@Path("user_name") userName: String): Response<MealPlanResponse>
+    @GET("generate_meal_plan/{uid}")
+    suspend fun generateMealPlan(@Path("uid") uid: String): Response<MealPlanResponse>
 
-    @PUT("swap_meal/{user_name}")
+    @PUT("swap_meal/{uid}")
     suspend fun swapMeal(
-        @Path("user_name") userName: String,
+        @Path("uid") uid: String,
         @Body request: SwapMealRequest
     ): Response<Map<String, Any>>
 
@@ -38,6 +38,19 @@ interface ApiService {
 
     @POST("log_custom_meal")
     suspend fun logCustomMeal(@Body request: CustomMealRequest): Response<CustomMeal>
+
+    @GET("get_meal_history")
+    suspend fun getMealHistory(): Response<List<LoggedMeal>>
+
+    @GET("weekly_report/{uid}")
+    suspend fun getWeeklyReport(@Path("uid") uid: String): Response<WeeklyReport>
+
+    @POST("recipe_feedback/{uid}")
+    suspend fun submitFeedback(
+        @Path("uid") uid: String,
+        @Body feedback: FeedbackRequest
+    ): Response<Map<String, Any>>
+
 
 }
 
