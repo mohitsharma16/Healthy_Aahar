@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mohit.healthy_aahar.R
@@ -26,35 +27,38 @@ import com.mohit.healthy_aahar.R
 fun OnboardingScreen(onComplete: () -> Unit) {
     var pageIndex by remember { mutableStateOf(0) }
 
+    val lightGreen = Color(0xFFE8F5E1) // Background color from images
+    val textGreen = Color(0xFF61A744) // Text green color from images
+    val darkBrown = Color(0xFF48341C) // Dark text color
+
     val pages = listOf(
         OnboardingPage(
-            title = "WELCOME",
-            centerText = "to",
-            highlightedText = "Healthy Aahar",
-//            description = "Your Guide to Nutritious Living!",
-            image = R.drawable.onboarding_1, // Add correct image in drawable
-            description = "Your Guide to Nutritious Living!",
-            bgColor = Color(0xFFE9F5C7)
+            title = "Welcome to Healthy आहार",
+            description = "where Indian flavors meet your fitness goals. Let's spice up your health journey!",
+            image = R.drawable.onboarding_logo_1, // Image 4
+            bgColor = lightGreen,
+            textColor = textGreen
         ),
         OnboardingPage(
-            title = "Discover personalized",
-            centerText = "",
-            highlightedText = "",
-            description = "meal plans, nutrition tips, and diet tracking to achieve your health goals",
-            image = R.drawable.onboarding_2,
-            bgColor = Color(0xFFD2EAE2)
+            title = "Eat Healthy, Stay Rooted",
+            description = "Discover personalized diet plans tailored to your Indian taste and lifestyle.",
+            image = R.drawable.onboarding_health, // Image 3
+            bgColor = lightGreen,
+            textColor = textGreen
         ),
         OnboardingPage(
-            title = "How it Works",
-            centerText = "",
-            highlightedText = "",
-            description = """
-                ⭐ Step 1: Tell us about your dietary preferences and health goals.
-                ⭐ Step 2: Get a personalized meal plan based on your needs.
-                ⭐ Step 3: Track your nutrition and stay on top of your diet.
-            """.trimIndent(),
-            image = null,
-            bgColor = Color(0xFFFCEEC8)
+            title = "Your Ingredients, Your Recipes",
+            description = "Tell us what's in your kitchen, and get nutritious recipes instantly — minimizing waste, maximizing flavor.",
+            image = R.drawable.onboarding_ingrident, // Image 2
+            bgColor = lightGreen,
+            textColor = textGreen
+        ),
+        OnboardingPage(
+            title = "Track Your Health Journey",
+            description = "Set goals, monitor progress, and receive smart reminders — all in one place.",
+            image = R.drawable.onboarding_fit, // Image 1
+            bgColor = lightGreen,
+            textColor = textGreen
         )
     )
 
@@ -64,28 +68,89 @@ fun OnboardingScreen(onComplete: () -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .background(currentPage.bgColor)
-            .padding(16.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // **Header (App Name & Arrow Button)**
-            Row(
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Main Content - Image and Text
+            AnimatedContent(
+                targetState = pageIndex,
+                transitionSpec = {
+                    fadeIn() + slideInHorizontally { it } with fadeOut() + slideOutHorizontally { -it }
+                },
+                label = "Onboarding Transition"
+            ) { index ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(horizontal = 20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    // Image
+                    Image(
+                        painter = painterResource(id = pages[index].image),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(240.dp)
+                            .padding(bottom = 40.dp)
+                    )
+
+                    // Title
+                    Text(
+                        text = pages[index].title,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = darkBrown,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Description
+                    Text(
+                        text = pages[index].description,
+                        fontSize = 16.sp,
+                        color = Color.Gray,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
+            // Bottom Navigation Area
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .padding(bottom = 32.dp)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "Healthy Aahar",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF905E28)
-                )
+                // Pagination Dots
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    pages.indices.forEach { index ->
+                        Box(
+                            modifier = Modifier
+                                .padding(horizontal = 4.dp)
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (index == pageIndex) textGreen else Color.LightGray.copy(alpha = 0.5f)
+                                )
+                        )
+                    }
+                }
+
+                // Next Button
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(48.dp)
                         .clip(CircleShape)
                         .background(Color.White)
                         .clickable {
@@ -100,133 +165,19 @@ fun OnboardingScreen(onComplete: () -> Unit) {
                     Icon(
                         imageVector = Icons.Filled.ArrowForward,
                         contentDescription = "Next",
-                        tint = Color.Black
+                        tint = darkBrown
                     )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // **Main Onboarding Card (Covers Full Page After Header)**
-            AnimatedContent(
-                targetState = currentPage,
-                transitionSpec = {
-                    fadeIn() + slideInHorizontally { it } with fadeOut() + slideOutHorizontally { -it }
-                },
-                label = "Onboarding Transition"
-            ) { page ->
-                Card(
-                    shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .fillMaxHeight() // **Full-Screen Card**
-                        .padding(horizontal = 8.dp),
-                    elevation = CardDefaults.cardElevation(8.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        // **Title, Center Text, and Highlighted Text (First Screen)**
-                        if (pageIndex == 0) {
-                            Text(
-                                text = page.title,
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = page.centerText,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = Color.Gray
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = page.highlightedText,
-                                fontSize = 26.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF5C8124)
-                            )
-                        } else {
-                            // **Title for Other Screens**
-                            Text(
-                                text = page.title,
-                                fontSize = 22.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // **Image (If Available)**
-                        if (page.image != null) {
-                            Image(
-                                painter = painterResource(id = page.image),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(200.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // **Description Text**
-                        Text(
-                            text = page.description,
-                            fontSize = 16.sp,
-                            color = Color.Gray,
-                            modifier = Modifier.padding(horizontal = 16.dp)
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // **Get Started Button on Last Screen**
-                        if (pageIndex == pages.size - 1) {
-                            Button(
-                                onClick = onComplete,
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFCEEC8)),
-                                modifier = Modifier
-                                    .padding(16.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                            ) {
-                                Text(text = "Get Started", fontSize = 16.sp, color = Color.Black)
-                            }
-                        }
-
-                        // **Pagination Indicator**
-                        Row(
-                            modifier = Modifier.padding(8.dp),
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            pages.indices.forEach { index ->
-                                Box(
-                                    modifier = Modifier
-                                        .size(if (index == pageIndex) 8.dp else 6.dp)
-                                        .padding(4.dp)
-                                        .clip(CircleShape)
-                                        .background(if (index == pageIndex) Color(0xFFFCCB67) else Color.LightGray)
-                                )
-                            }
-                        }
-                    }
                 }
             }
         }
     }
 }
 
-// **Data Class for Onboarding Pages**
+// Updated Data Class for Onboarding Pages
 data class OnboardingPage(
     val title: String,
-    val centerText: String,
-    val highlightedText: String,
     val description: String,
-    val image: Int?,
-    val bgColor: Color
+    val image: Int,
+    val bgColor: Color,
+    val textColor: Color
 )
