@@ -1,6 +1,7 @@
 package com.mohit.healthy_aahar.ui.screens.auth
 
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,10 +13,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.mohit.healthy_aahar.ui.navigation.Screen
@@ -26,6 +30,7 @@ import com.google.firebase.auth.FirebaseAuth
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.mohit.healthy_aahar.R
 import kotlinx.coroutines.launch
 
 
@@ -34,7 +39,7 @@ import kotlinx.coroutines.launch
 fun SignupScreen(navController: NavController, authViewModel: AuthViewModel = viewModel()) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var isLogin by remember { mutableStateOf(false) }
+    var isLogin by remember { mutableStateOf(true) } // Default to login view
     var message by remember { mutableStateOf("") }
 
     // Observe the auth state changes
@@ -42,6 +47,11 @@ fun SignupScreen(navController: NavController, authViewModel: AuthViewModel = vi
 
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Light green background color
+    val lightGreen = Color(0xFFE8F5E1)
+    val greenButton = Color(0xFF8BC34A)
+    val textGreen = Color(0xFF61A744)
 
     // Handle navigation & messages based on auth state
     LaunchedEffect(authState) {
@@ -80,75 +90,90 @@ fun SignupScreen(navController: NavController, authViewModel: AuthViewModel = vi
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(if (isLogin) "Login Screen" else "Signup Screen") },
-                colors = TopAppBarDefaults.mediumTopAppBarColors(containerColor = Color.Transparent)
-            )
-        }
-    ) { contentPadding ->
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(lightGreen)
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(contentPadding)
-                .padding(16.dp)
-                .background(Color(0xFFF0F0F0)), // Neutral background
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center // Center the content
+                .padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = if (isLogin) "Login" else "Sign Up",
-                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.primary
+            Spacer(modifier = Modifier.height(60.dp))
+
+            // Indian flag with spices image
+            Image(
+                painter = painterResource(id = R.drawable.indian_flag), // Add this image to your resources
+                contentDescription = "Indian flag with spices",
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .height(120.dp)
             )
+
             Spacer(modifier = Modifier.height(16.dp))
 
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                shape = RoundedCornerShape(12.dp),
-                elevation = CardDefaults.elevatedCardElevation(4.dp)
-            ) {
-                Column(
+            // Welcome Back! text
+            Text(
+                text = "Welcome Back!",
+                color = textGreen,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(vertical = 16.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Email field
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "Email*",
+                    color = Color.DarkGray,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    placeholder = { Text("Enter your email") },
                     modifier = Modifier
-                        .padding(16.dp)
                         .fillMaxWidth()
-                ) {
-                    TextField(
-                        value = email,
-                        onValueChange = { email = it },
-                        label = { Text("Email") },
-                        leadingIcon = {
-                            Icon(Icons.Filled.Mail, contentDescription = "Email Icon")
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = TextFieldDefaults.colors(
-                        )
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    TextField(
-                        value = password,
-                        onValueChange = { password = it },
-                        label = { Text("Password") },
-                        leadingIcon = {
-                            Icon(Icons.Filled.Lock, contentDescription = "Password Icon")
-                        },
-                        visualTransformation = PasswordVisualTransformation(),
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = TextFieldDefaults.colors(
-                        )
-                    )
-                }
+                        .height(56.dp),
+                    shape = RoundedCornerShape(28.dp),
+                    singleLine = true
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Password field
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "Password*",
+                    color = Color.DarkGray,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    placeholder = { Text("Enter your password") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(28.dp),
+                    singleLine = true
+                )
+            }
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            // Login/Signup Button
             Button(
                 onClick = {
                     if (isLogin) {
@@ -158,33 +183,43 @@ fun SignupScreen(navController: NavController, authViewModel: AuthViewModel = vi
                     }
                 },
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
-                shape = RoundedCornerShape(12.dp),
+                    .fillMaxWidth(0.7f)
+                    .height(48.dp),
+                shape = RoundedCornerShape(24.dp),
                 enabled = authState !is AuthState.Loading,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                colors = ButtonDefaults.buttonColors(containerColor = greenButton)
             ) {
                 Text(
                     text = if (isLogin) "Login" else "Sign Up",
-                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 16.sp
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
+            // Switch between login and signup
             TextButton(onClick = { isLogin = !isLogin }) {
                 Text(
                     text = if (isLogin) "Don't have an account? Sign Up" else "Already have an account? Login",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.secondary)
+                    color = textGreen,
+                    fontSize = 14.sp
                 )
             }
 
             if (message.isNotEmpty()) {
-                Text(text = message, color = MaterialTheme.colorScheme.error)
+                Text(
+                    text = message,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
             }
 
             if (authState is AuthState.Loading) {
-                CircularProgressIndicator(modifier = Modifier.padding(top = 16.dp))
+                CircularProgressIndicator(
+                    modifier = Modifier.padding(top = 16.dp),
+                    color = textGreen
+                )
             }
         }
     }
