@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.mohit.healthy_aahar.datastore.UserPreference
+import com.mohit.healthy_aahar.ui.theme.Primary600
 import com.mohit.healthy_aahar.ui.viewmodel.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,17 +56,9 @@ fun FoodLoggingScreen(navController: NavController) {
                         )
                     }
                 },
-                actions = {
-                    IconButton(onClick = { /* Handle menu */ }) {
-                        Icon(
-                            Icons.Default.Menu,
-                            contentDescription = "Menu",
-                            tint = Color.White
-                        )
-                    }
-                },
+
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF8BC34A) // Green color matching the image
+                    containerColor = Primary600 // Green color matching the image
                 )
             )
         }
