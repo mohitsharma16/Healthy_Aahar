@@ -11,7 +11,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.NavDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.mohit.healthy_aahar.repository.AuthRepository
+import com.mohit.healthy_aahar.ui.components.AppDrawerContent
 import com.mohit.healthy_aahar.ui.components.BottomNavBar
+import com.mohit.healthy_aahar.ui.components.RightSideDrawer
 import com.mohit.healthy_aahar.ui.navigation.AppNavGraph
 import com.mohit.healthy_aahar.ui.navigation.Screen
 import dagger.hilt.android.AndroidEntryPoint
@@ -19,37 +21,57 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val authRepository = AuthRepository()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContent {
             val navController = rememberNavController()
+            var isDrawerOpen by remember { mutableStateOf(false) }
+            val scope = rememberCoroutineScope()
             var isNavBarVisible by remember { mutableStateOf(true) }
 
-            // Observe Navigation Changes to Show/Hide Bottom Navbar
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route
-
             isNavBarVisible = shouldShowBottomNav(currentRoute)
 
-            Scaffold(
-                bottomBar = {
-                    if (isNavBarVisible) {
-                        BottomNavBar(navController, isNavBarVisible)
+            Box {
+                Scaffold(
+                    bottomBar = {
+                        if (isNavBarVisible) {
+                            BottomNavBar(navController, isNavBarVisible)
+                        }
+                    }
+                ) { innerPadding ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                    ) {
+                        AppNavGraph(
+                            navController = navController,
+                            authRepository = authRepository,
+                            onMenuClick = { isDrawerOpen = true }
+                        )
                     }
                 }
-            ) { innerPadding ->
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
+
+                RightSideDrawer(
+                    isOpen = isDrawerOpen,
+                    onClose = { isDrawerOpen = false }
                 ) {
-                    AppNavGraph(navController, authRepository)
+                    AppDrawerContent { route ->
+                        isDrawerOpen = false
+                        navController.navigate(route) {
+                            launchSingleTop = true
+                            popUpTo(Screen.Home.route)
+                        }
+                    }
                 }
             }
         }
     }
 }
+
 
 // **Function to Check If Bottom Nav Should Be Visible**
 fun shouldShowBottomNav(route: String?): Boolean {
