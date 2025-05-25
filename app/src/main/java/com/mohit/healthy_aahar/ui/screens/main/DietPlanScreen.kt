@@ -40,7 +40,7 @@ import com.mohit.healthy_aahar.model.LogMealRequest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DietPlanScreen(navController: NavController) {
+fun DietPlanScreen(navController: NavController, onMenuClick: () -> Unit) {
     val mainViewModel: MainViewModel = viewModel()
     val mealPlanState by mainViewModel.mealPlan.observeAsState()
     val context = LocalContext.current
@@ -48,8 +48,8 @@ fun DietPlanScreen(navController: NavController) {
     val uid by uidFlow.collectAsState(initial = null)
 
     // Trigger once on first composition
-    LaunchedEffect(Unit) {
-        mainViewModel.getMealPlan("sourabh sharma") // Replace with actual user name
+    LaunchedEffect(uid) {
+        uid?.let { mainViewModel.getMealPlan(it) }
     }
 
     Column(
@@ -77,7 +77,7 @@ fun DietPlanScreen(navController: NavController) {
                 }
             },
             actions = {
-                IconButton(onClick = { /* Menu action */ }) {
+                IconButton(onClick = { onMenuClick()}) {
                     Icon(
                         Icons.Default.Menu,
                         contentDescription = "Menu",
@@ -352,240 +352,3 @@ fun MealCard(meal: Meal, viewModel: MainViewModel, uid: String?) {
     }
 }
 
-// Keep your existing tab-based components for backwards compatibility
-@Composable
-fun DietPlanTab(icon: androidx.compose.ui.graphics.vector.ImageVector, isSelected: Boolean, onClick: () -> Unit) {
-    IconButton(onClick = onClick) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = if (isSelected) Color(0xFF8D4A1D) else Color.Gray,
-            modifier = Modifier.size(32.dp)
-        )
-    }
-}
-
-@Composable
-fun PersonalizedDietPlan(mealPlan: List<Meal>) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text("Your Personalized Diet Plan", fontSize = 20.sp, color = Color.Black)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            DietPlanCard("MUSCLE GAIN", Color(0xFFD69AAE))
-            DietPlanCard("Keto", Color(0xFFF0E68C))
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text("Calorie Target", fontSize = 18.sp, color = Color.Black)
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color(0xFFC5E6DA), shape = RoundedCornerShape(16.dp))
-                .padding(16.dp)
-        ) {
-            Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    NutrientCard("Carbs", "0")
-                    NutrientCard("Protein", "0")
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    NutrientCard("Water", "0")
-                    NutrientCard("Calorie", "0")
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text("Recommended Recipes", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        mealPlan.forEach { meal ->
-            MealCard(meal = meal, viewModel = viewModel(), uid = null)
-            Spacer(modifier = Modifier.height(12.dp))
-        }
-    }
-}
-
-@Composable
-fun DailyNutritionOverview() {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text("Complete Your Daily Nutrition", fontSize = 20.sp, color = Color.Black)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            NutritionInfoCard("Kalori", "832kCal")
-            NutritionInfoCard("Protein", "200gr")
-            NutritionInfoCard("Water", "1000ml")
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text("Have you followed your diet today?", fontSize = 18.sp, color = Color.Black)
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Column {
-            Row {
-                CheckboxItem("Breakfast")
-                CheckboxItem("Lunch")
-            }
-            Row {
-                CheckboxItem("Dinner")
-                CheckboxItem("Water")
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text("If Not, Then Log Your Meal", fontSize = 16.sp, color = Color.Black)
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        FloatingActionButton(onClick = { /* TODO: Navigate to Meal Log */ }) {
-            Text("+", fontSize = 24.sp)
-        }
-    }
-}
-
-@Composable
-fun MealLoggingForm() {
-    val context = LocalContext.current
-    val mainViewModel: MainViewModel = viewModel()
-    val uidFlow = remember { UserPreference.getUidFlow(context) }
-    val uid by uidFlow.collectAsState(initial = null)
-
-    var customMealText by remember { mutableStateOf("") }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFFF8D6BE), shape = RoundedCornerShape(16.dp))
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text("Log Your Custom Meal", fontSize = 20.sp, color = Color.Black)
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        OutlinedTextField(
-            value = customMealText,
-            onValueChange = { customMealText = it },
-            label = { Text("Enter your meal") },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color(0xFF8D4A1D),
-                focusedLabelColor = Color(0xFF8D4A1D)
-            )
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = {
-                if (!customMealText.isNullOrBlank() && uid != null) {
-                    mainViewModel.logCustomMeal(
-                        uid = uid!!,
-                        date = java.time.LocalDate.now().toString(),
-                        description = customMealText.trim()
-                    )
-                    Toast.makeText(context, "Logging your meal...", Toast.LENGTH_SHORT).show()
-                    customMealText = ""
-                } else {
-                    Toast.makeText(context, "Please enter a meal", Toast.LENGTH_SHORT).show()
-                }
-            },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8D4A1D))
-        ) {
-            Text("Log", color = Color.White)
-        }
-    }
-}
-
-// Reusable Components
-@Composable
-fun DietPlanCard(text: String, color: Color) {
-    Box(
-        modifier = Modifier
-            .size(120.dp, 60.dp)
-            .background(color, shape = RoundedCornerShape(16.dp)),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
-    }
-}
-
-@Composable
-fun NutrientCard(title: String, value: String) {
-    Box(
-        modifier = Modifier
-            .size(80.dp)
-            .background(Color.White, shape = RoundedCornerShape(12.dp)),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(text = title, fontSize = 14.sp, color = Color.Black)
-            Text(text = value, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
-        }
-    }
-}
-
-@Composable
-fun NutritionInfoCard(title: String, value: String) {
-    Box(
-        modifier = Modifier
-            .size(100.dp, 60.dp)
-            .background(Color.White, shape = RoundedCornerShape(16.dp)),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(text = title, fontSize = 14.sp, color = Color.Black)
-            Text(text = value, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
-        }
-    }
-}
-
-@Composable
-fun CheckboxItem(label: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Checkbox(checked = false, onCheckedChange = {})
-        Text(label, fontSize = 16.sp, color = Color.Black)
-    }
-}
-
-@Composable
-fun MealInputField(label: String) {
-    Column {
-        Text(label, fontSize = 16.sp, color = Color.Black)
-        TextField(value = "", onValueChange = {})
-    }
-}
