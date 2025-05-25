@@ -15,7 +15,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.mohit.healthy_aahar.ui.navigation.Screen
-import com.mohit.healthy_aahar.ui.screens.main.border
 import com.mohit.healthy_aahar.ui.theme.Neutral400
 import com.mohit.healthy_aahar.ui.theme.Primary700
 import com.mohit.healthy_aahar.ui.theme.Primary800
