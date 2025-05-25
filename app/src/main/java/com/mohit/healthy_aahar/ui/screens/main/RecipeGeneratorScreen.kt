@@ -1,6 +1,7 @@
 package com.mohit.healthy_aahar.ui.screens.main
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -65,122 +66,114 @@ fun RecipeGeneratorScreen(navController: NavController) {
         foodItems.filter { it.name.contains(searchText, ignoreCase = true) }
     }
 
-    Scaffold { contentPadding ->
-        Column(
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
+        // Top Bar with green background
+        Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(contentPadding)
+                .fillMaxWidth()
+                .background(Color(0xFF8BC34A))
+                .padding(16.dp)
         ) {
-            // Top Bar with green background
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFF8BC34A))
-                    .padding(16.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Back",
-                        tint = Color.White,
-                        modifier = Modifier.clickable { navController.popBackStack() }
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Text(
-                        text = "LeftOvers",
-                        color = Color.White,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
-                    Icon(
-                        imageVector = Icons.Default.Menu,
-                        contentDescription = "Menu",
-                        tint = Color.White
-                    )
-                }
-            }
-
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp)
-            ) {
-                // Search Bar
-                OutlinedTextField(
-                    value = searchText,
-                    onValueChange = { searchText = it },
-                    placeholder = { Text("Search Ingredients") },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(24.dp)),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = Color.White,
-                        focusedContainerColor = Color.White,
-                        unfocusedBorderColor = Color.LightGray,
-                        focusedBorderColor = Color(0xFF8BC34A)
-                    ),
-                    singleLine = true
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White,
+                    modifier = Modifier.clickable { navController.popBackStack() }
                 )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
+                Spacer(modifier = Modifier.width(16.dp))
                 Text(
-                    "Pick your Leftovers",
-                    fontSize = 18.sp,
+                    text = "Recipe Generator",
+                    color = Color.White,
+                    fontSize = 22.sp,
                     fontWeight = FontWeight.Medium
                 )
+                Spacer(modifier = Modifier.weight(1f))
+                Icon(
+                    imageVector = Icons.Default.Menu,
+                    contentDescription = "Menu",
+                    tint = Color.White
+                )
+            }
+        }
 
-                Spacer(modifier = Modifier.height(16.dp))
+        // Scrollable content
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
+        ) {
+            // Search Bar
+            OutlinedTextField(
+                value = searchText,
+                onValueChange = { searchText = it },
+                placeholder = { Text("Search Ingredients") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(24.dp)),
+                shape = RoundedCornerShape(24.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedContainerColor = Color.White,
+                    focusedContainerColor = Color.White,
+                    unfocusedBorderColor = Color.LightGray,
+                    focusedBorderColor = Color(0xFF8BC34A)
+                ),
+                singleLine = true
+            )
 
-                // Ingredient Grid - 2 columns
-                val chunkedItems = filteredItems.chunked(2)
-                chunkedItems.forEach { rowItems ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        rowItems.forEach { item ->
-                            val isSelected = selectedItems.contains(item.name)
-                            IngredientCard(
-                                item = item,
-                                isSelected = isSelected,
-                                onClick = {
-                                    selectedItems = if (isSelected) {
-                                        selectedItems - item.name
-                                    } else {
-                                        selectedItems + item.name
-                                    }
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                "Pick your ingredients",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF2E7D32)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Ingredient Grid - 2 columns
+            val chunkedItems = filteredItems.chunked(2)
+            chunkedItems.forEach { rowItems ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    rowItems.forEach { item ->
+                        val isSelected = selectedItems.contains(item.name)
+                        IngredientCard(
+                            item = item,
+                            isSelected = isSelected,
+                            onClick = {
+                                selectedItems = if (isSelected) {
+                                    selectedItems - item.name
+                                } else {
+                                    selectedItems + item.name
                                 }
-                            )
-                        }
-                        // If odd number of items in last row, add spacer
-                        if (rowItems.size == 1) {
-                            Spacer(modifier = Modifier.weight(1f))
-                        }
+                            }
+                        )
                     }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                if (recipe != null) {
-                    RecipeResultCard(recipe!!)
-                }
-
-                if (error != null) {
-                    Text("❌ $error", color = Color.Red)
+                    // If odd number of items in last row, add spacer
+                    if (rowItems.size == 1) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
                 }
             }
 
-            // Generate Button at bottom
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Generate Button
             Button(
                 onClick = {
                     val ingredients = selectedItems.map { it.lowercase() }
@@ -191,25 +184,69 @@ fun RecipeGeneratorScreen(navController: NavController) {
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8BC34A))
+                    .height(56.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32)),
+                enabled = selectedItems.isNotEmpty()
             ) {
                 if (isLoading.value) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = Color.White
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Generating...",
+                            fontSize = 16.sp,
+                            color = Color.White,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 } else {
                     Text(
-                        text = "Generate!",
-                        fontSize = 18.sp,
+                        text = "Generate Recipe",
+                        fontSize = 16.sp,
                         color = Color.White,
-                        modifier = Modifier.padding(vertical = 4.dp)
+                        fontWeight = FontWeight.Medium
                     )
                 }
             }
 
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Recipe Result - appears below the button
+            if (recipe != null) {
+                RecipeResultCard(recipe!!)
+            }
+
+            if (error != null) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("❌", fontSize = 20.sp)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = error!!,
+                            color = Color(0xFFD32F2F),
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+            }
+
+            // Bottom padding for better scrolling
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
@@ -222,7 +259,7 @@ fun IngredientCard(item: FoodItem, isSelected: Boolean, onClick: () -> Unit) {
             .height(120.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(2.dp),
+        elevation = CardDefaults.cardElevation(if (isSelected) 6.dp else 2.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.White
         )
@@ -230,16 +267,14 @@ fun IngredientCard(item: FoodItem, isSelected: Boolean, onClick: () -> Unit) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .then(
-                    if (isSelected) {
-                        Modifier.border(
-                            width = 3.dp,
-                            color = Color(0xFF8BC34A),
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                    } else {
-                        Modifier
-                    }
+                .border(
+                    width = if (isSelected) 3.dp else 2.dp,
+                    color = if (isSelected) Color(0xFF2E7D32) else Color(0xFF2E7D32).copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .background(
+                    color = if (isSelected) Color(0xFF2E7D32).copy(alpha = 0.05f) else Color.Transparent,
+                    shape = RoundedCornerShape(12.dp)
                 ),
             contentAlignment = Alignment.Center
         ) {
@@ -250,36 +285,57 @@ fun IngredientCard(item: FoodItem, isSelected: Boolean, onClick: () -> Unit) {
                 Icon(
                     painter = painterResource(id = item.imageRes),
                     contentDescription = item.name,
-                    modifier = Modifier.size(50.dp),
+                    modifier = Modifier.size(48.dp),
                     tint = Color.Unspecified
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = item.name,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
+                    fontSize = 14.sp,
+                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                    color = if (isSelected) Color(0xFF2E7D32) else Color(0xFF424242)
                 )
             }
         }
     }
 }
 
-
 @Composable
 fun RecipeResultCard(recipe: Any) {
     Card(
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 16.dp)
+        elevation = CardDefaults.cardElevation(6.dp),
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Column(Modifier.padding(16.dp)) {
+        Column(
+            modifier = Modifier.padding(20.dp)
+        ) {
+            // Header with recipe title
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "🍽️",
+                    fontSize = 24.sp
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Generated Recipe",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF2E7D32)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // Using reflection to get properties to maintain compatibility with original code
             val recipeName = try {
-                recipe.javaClass.getDeclaredField("TranslatedRecipeName").apply { isAccessible = true }.get(recipe)?.toString() ?: "Recipe"
+                recipe.javaClass.getDeclaredField("TranslatedRecipeName").apply { isAccessible = true }.get(recipe)?.toString() ?: "Delicious Recipe"
             } catch (e: Exception) {
-                "Recipe"
+                "Delicious Recipe"
             }
 
             val cuisine = try {
@@ -312,20 +368,89 @@ fun RecipeResultCard(recipe: Any) {
                 ""
             }
 
-            Text("🍽️ $recipeName", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-            Text("🌍 Cuisine: $cuisine")
-            Text("🕒 Time: $time mins")
-            Text("🔥 Calories: $calories")
+            // Recipe Name
+            Text(
+                text = recipeName,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1B5E20)
+            )
 
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Recipe Info Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                InfoChip(icon = "🌍", label = "Cuisine", value = cuisine)
+                InfoChip(icon = "🕒", label = "Time", value = "$time mins")
+                InfoChip(icon = "🔥", label = "Calories", value = calories)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Ingredients Section
+            SectionCard(
+                title = "📋 Ingredients",
+                content = ingredients
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Instructions Section
+            SectionCard(
+                title = "📖 Instructions",
+                content = instructions
+            )
+        }
+    }
+}
+
+@Composable
+fun InfoChip(icon: String, label: String, value: String) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = icon, fontSize = 20.sp)
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            color = Color.Gray,
+            fontWeight = FontWeight.Medium
+        )
+        Text(
+            text = value,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color(0xFF2E7D32)
+        )
+    }
+}
+
+@Composable
+fun SectionCard(title: String, content: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F8E9))
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp)
+        ) {
+            Text(
+                text = title,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                color = Color(0xFF2E7D32)
+            )
             Spacer(modifier = Modifier.height(8.dp))
-
-            Text("📋 Ingredients:", fontWeight = FontWeight.Bold)
-            Text(ingredients)
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text("📖 Instructions:", fontWeight = FontWeight.Bold)
-            Text(instructions)
+            Text(
+                text = content,
+                fontSize = 14.sp,
+                color = Color(0xFF424242),
+                lineHeight = 20.sp
+            )
         }
     }
 }
@@ -338,9 +463,3 @@ data class FoodItem(val name: String, val imageRes: Int)
 fun PreviewRecipeGeneratorScreen() {
     RecipeGeneratorScreen(navController = rememberNavController())
 }
-
-// Extension function to add border to a modifier
-fun Modifier.border(width: Dp, color: Color, shape: RoundedCornerShape) = this
-    .padding(width / 2)
-    .background(color = color, shape = shape)
-    .padding(width / 2)
