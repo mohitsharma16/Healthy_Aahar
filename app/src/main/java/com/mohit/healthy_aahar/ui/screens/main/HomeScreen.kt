@@ -41,7 +41,7 @@ import com.mohit.healthy_aahar.ui.theme.LightGreen
 import com.mohit.healthy_aahar.ui.viewmodel.MainViewModel
 
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(navController: NavController, onMenuClick: () -> Unit) {
     val scrollState = rememberScrollState()
 
     Column(
@@ -50,7 +50,7 @@ fun HomeScreen(navController: NavController) {
             .verticalScroll(scrollState)
     ) {
         // Welcome Header
-        WelcomeHeader()
+        WelcomeHeader(onMenuClick)
 
         // Daily Tracker Section
         DailyTrackerSection()
@@ -64,7 +64,7 @@ fun HomeScreen(navController: NavController) {
 }
 
 @Composable
-fun WelcomeHeader() {
+fun WelcomeHeader(onMenuClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -90,7 +90,9 @@ fun WelcomeHeader() {
                     imageVector = Icons.Outlined.Menu,
                     contentDescription = "Menu",
                     tint = Color.White,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clickable { onMenuClick() }
                 )
             }
 
@@ -448,5 +450,8 @@ fun MealSwapTestScreen(userName: String) {
 @Preview(showBackground = true)
 @Composable
 fun PreviewFullHomeScreen() {
-    HomeScreen(navController = rememberNavController())
+    HomeScreen(
+        navController = rememberNavController(),
+        onMenuClick = {}
+    )
 }
