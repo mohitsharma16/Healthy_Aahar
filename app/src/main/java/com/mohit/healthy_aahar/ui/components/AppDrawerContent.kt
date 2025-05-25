@@ -126,11 +126,6 @@ fun AppDrawerContent(
                         onClick = { onNavigate(Screen.FoodLogging.route) }
                     )
 
-                    DrawerItem(
-                        Icons.Outlined.Person,
-                        "Profile",
-                        onClick = { onNavigate(Screen.Profile.route) }
-                    )
                 }
             }
 
