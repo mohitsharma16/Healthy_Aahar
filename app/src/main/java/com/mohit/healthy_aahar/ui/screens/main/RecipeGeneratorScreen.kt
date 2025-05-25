@@ -210,8 +210,6 @@ fun RecipeGeneratorScreen(navController: NavController) {
                 }
             }
 
-            // Bottom Navigation
-            BottomNavigation()
         }
     }
 }
@@ -266,58 +264,6 @@ fun IngredientCard(item: FoodItem, isSelected: Boolean, onClick: () -> Unit) {
     }
 }
 
-@Composable
-fun BottomNavigation() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White)
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        BottomNavItem(
-            icon = R.drawable.ic_corn, // Using corn as home icon placeholder
-            label = "Home",
-            isSelected = false
-        )
-        BottomNavItem(
-            icon = R.drawable.sweet_potato, // Using sweet potato as diet plan icon placeholder
-            label = "Diet Plan",
-            isSelected = false
-        )
-        BottomNavItem(
-            icon = R.drawable.broccoli, // Using broccoli as dashboard icon placeholder
-            label = "Dashboard",
-            isSelected = false
-        )
-        BottomNavItem(
-            icon = R.drawable.carrot, // Using carrot as leftover icon placeholder
-            label = "Leftover",
-            isSelected = true
-        )
-    }
-}
-
-@Composable
-fun BottomNavItem(icon: Int, label: String, isSelected: Boolean) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-        modifier = Modifier.clickable { /* Navigation would go here */ }
-    ) {
-        Icon(
-            painter = painterResource(id = icon),
-            contentDescription = label,
-            tint = if (isSelected) Color(0xFF8BC34A) else Color.Gray,
-            modifier = Modifier.size(24.dp)
-        )
-        Text(
-            text = label,
-            color = if (isSelected) Color(0xFF8BC34A) else Color.Gray,
-            fontSize = 12.sp
-        )
-    }
-}
 
 @Composable
 fun RecipeResultCard(recipe: Any) {
