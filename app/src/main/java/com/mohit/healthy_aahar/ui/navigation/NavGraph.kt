@@ -62,6 +62,9 @@ fun AppNavGraph(navController: NavHostController, authRepository: AuthRepository
         composable(Screen.StatisticsScreen.route) {
             StatisticsScreen(navController)
         }
+        composable(Screen.FoodLogging.route){
+            FoodLoggingScreen(navController)
+        }
         composable(Screen.NutritionalAnalysis.route) {
             NutritionalAnalysisScreen(navController)
         }
