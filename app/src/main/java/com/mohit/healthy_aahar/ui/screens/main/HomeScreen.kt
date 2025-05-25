@@ -31,23 +31,39 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.mohit.healthy_aahar.R
+import com.mohit.healthy_aahar.datastore.UserPreference
+import com.mohit.healthy_aahar.model.Meal
 import com.mohit.healthy_aahar.ui.navigation.Screen
 import com.mohit.healthy_aahar.ui.theme.GreenBackground
 import com.mohit.healthy_aahar.ui.theme.LightGreen
+import com.mohit.healthy_aahar.ui.theme.Primary200
+import com.mohit.healthy_aahar.ui.theme.Primary50
 import com.mohit.healthy_aahar.ui.viewmodel.MainViewModel
 
 @Composable
-fun HomeScreen(navController: NavController, onMenuClick: () -> Unit) {
+fun HomeScreen(navController: NavController, onMenuClick: () -> Unit, viewModel: MainViewModel = viewModel() ) {
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
+    val uidFlow = remember { UserPreference.getUidFlow(context) }
+    val uid by uidFlow.collectAsState(initial = null)
+    val mealPlan by viewModel.mealPlan.observeAsState()
+    val error by viewModel.error.observeAsState()
+
+    // Trigger the API call only once when the screen loads
+    LaunchedEffect(uid) {
+        uid?.let { viewModel.getMealPlan(it) }
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
+            .background(Color.White)
     ) {
         // Welcome Header
         WelcomeHeader(onMenuClick)
@@ -56,7 +72,7 @@ fun HomeScreen(navController: NavController, onMenuClick: () -> Unit) {
         DailyTrackerSection()
 
         // Today's Meals Section
-        TodaysMealsSection(navController)
+        TodaysMealsSection(navController, meals = mealPlan?.meal_plan ?: emptyList())
 
         // Bottom Navigation Spacer (to account for the bottom nav bar)
         Spacer(modifier = Modifier.height(80.dp))
@@ -65,15 +81,16 @@ fun HomeScreen(navController: NavController, onMenuClick: () -> Unit) {
 
 @Composable
 fun WelcomeHeader(onMenuClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(GreenBackground)
-            .padding(16.dp)
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp),
+        colors = CardDefaults.cardColors(containerColor = GreenBackground),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(16.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -83,7 +100,7 @@ fun WelcomeHeader(onMenuClick: () -> Unit) {
                 Text(
                     text = "Welcome Back",
                     color = Color.White,
-                    fontSize = 16.sp
+                    fontSize = 16.sp,
                 )
 
                 Icon(
@@ -96,14 +113,15 @@ fun WelcomeHeader(onMenuClick: () -> Unit) {
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             Text(
                 text = "Hi, Mohit.",
                 color = Color.White,
-                fontSize = 24.sp,
+                fontSize = 36.sp,
                 fontWeight = FontWeight.Bold
             )
+            Spacer(modifier = Modifier.height(16.dp))
 
             Text(
                 text = "Small changes today.",
@@ -111,6 +129,7 @@ fun WelcomeHeader(onMenuClick: () -> Unit) {
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
             )
+            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = "Stronger you tomorrow.",
@@ -119,10 +138,11 @@ fun WelcomeHeader(onMenuClick: () -> Unit) {
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
+
 
 @Composable
 fun DailyTrackerSection() {
@@ -198,7 +218,7 @@ fun NutritionTrackerCard(
             .padding(4.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = Primary50
         )
     ) {
         Column(
@@ -254,7 +274,10 @@ fun NutritionTrackerCard(
 }
 
 @Composable
-fun TodaysMealsSection(navController: NavController) {
+fun TodaysMealsSection(
+    navController: NavController,
+    meals: List<Meal>
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -268,32 +291,26 @@ fun TodaysMealsSection(navController: NavController) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Example meals - in a real app, these would come from a database or API
-        MealCard(
-            mealName = "Scrambled Eggs",
-            mealTime = "Breakfast",
-            calories = "451",
-            protein = "25g",
-            carbs = "32g",
-            fats = "14g",
-            imageRes = R.drawable.ic_food_placeholder,
-            onClick = { navController.navigate(Screen.NutritionalAnalysis.route) }
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        MealCard(
-            mealName = "Chicken over rice",
-            mealTime = "Lunch",
-            calories = "451",
-            protein = "",
-            carbs = "",
-            fats = "",
-            imageRes = R.drawable.ic_food_placeholder,
-            onClick = { navController.navigate(Screen.NutritionalAnalysis.route) }
-        )
-
-        // You can add more meals dynamically from your data source
+        if (meals.isEmpty()) {
+            Text(text = "No meals planned for today.")
+        } else {
+            // FIXED: Use regular Column instead of LazyColumn to avoid nesting scroll conflicts
+            Column {
+                meals.forEach { meal ->
+                    MealCard(
+                        mealName = meal.TranslatedRecipeName,
+                        mealTime = "",  // You don't have a specific time in the model; could be empty or infer if you want
+                        calories = meal.Calories.toInt().toString(),
+                        protein = meal.Protein.toString(),
+                        carbs = meal.Carbs.toString(),
+                        fats = meal.Fat.toString(),
+                        imageRes = R.drawable.ic_food_placeholder, // Placeholder as you don't have image URL or resource
+                        onClick = { navController.navigate(Screen.NutritionalAnalysis.route) }
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+            }
+        }
     }
 }
 
