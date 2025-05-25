@@ -31,13 +31,16 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.mohit.healthy_aahar.R
 import com.mohit.healthy_aahar.datastore.UserPreference
+import com.mohit.healthy_aahar.ui.theme.Primary600
 import com.mohit.healthy_aahar.ui.viewmodel.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(onSignOut: () -> Unit = {}) {
+fun ProfileScreen(navController: NavController, onSignOut: () -> Unit = {}) {
     val viewModel: MainViewModel = viewModel()
     val context = LocalContext.current
     val uidFlow = remember { UserPreference.getUidFlow(context) }
@@ -73,7 +76,7 @@ fun ProfileScreen(onSignOut: () -> Unit = {}) {
                 )
             },
             navigationIcon = {
-                IconButton(onClick = { /* Handle back navigation */ }) {
+                IconButton(onClick = { navController.popBackStack() }) {
                     Icon(
                         Icons.Default.ArrowBack,
                         contentDescription = "Back",
@@ -81,17 +84,9 @@ fun ProfileScreen(onSignOut: () -> Unit = {}) {
                     )
                 }
             },
-            actions = {
-                IconButton(onClick = { /* Handle menu */ }) {
-                    Icon(
-                        Icons.Default.Menu,
-                        contentDescription = "Menu",
-                        tint = Color.White
-                    )
-                }
-            },
+
             colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = Color(0xFF8BC34A)
+                containerColor = Primary600
             )
         )
 
@@ -389,5 +384,5 @@ fun ProfileTextOption(text: String, onClick: () -> Unit) {
 @Preview(showBackground = true)
 @Composable
 fun ProfileScreenPreview() {
-    ProfileScreen(onSignOut = {})
+    ProfileScreen( navController = rememberNavController(), onSignOut = {})
 }
