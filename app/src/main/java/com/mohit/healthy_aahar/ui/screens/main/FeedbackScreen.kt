@@ -23,6 +23,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.mohit.healthy_aahar.R
+import com.mohit.healthy_aahar.ui.theme.Primary600
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,8 +41,8 @@ fun FeedbackScreen(navController: NavController) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFF8BC34A))
-                    .padding(16.dp)
+                    .background(Primary600)
+                    .padding(18.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -61,11 +62,7 @@ fun FeedbackScreen(navController: NavController) {
                         fontWeight = FontWeight.Medium
                     )
                     Spacer(modifier = Modifier.weight(1f))
-                    Icon(
-                        imageVector = Icons.Default.Menu,
-                        contentDescription = "Menu",
-                        tint = Color.White
-                    )
+
                 }
             }
 
