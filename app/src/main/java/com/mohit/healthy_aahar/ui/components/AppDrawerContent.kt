@@ -37,68 +37,120 @@ fun AppDrawerContent(
 ) {
     var showLogoutDialog by remember { mutableStateOf(false) }
 
-    Column(
+    // Main container that prevents clicks from propagating
+    Box(
         modifier = Modifier
             .fillMaxHeight()
             .width(280.dp)
             .background(Color.White)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.SpaceBetween
+            .clickable(
+                onClick = { }, // Empty click handler to consume clicks
+                indication = null,
+                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+            )
     ) {
-        Column {
-            // User Info Section
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Mohit", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    Text("Edit", fontSize = 14.sp, color = Color(0xFF4CAF50))
-                }
-                Image(
-                    painter = painterResource(id = R.drawable.ic_profile),
-                    contentDescription = "User Avatar",
+        Column(
+            modifier = Modifier
+                .fillMaxHeight()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                // User Info Section with better spacing
+                Card(
                     modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                )
+                        .fillMaxWidth()
+                        .clickable { onNavigate(Screen.Profile.route) },
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FA)),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(2.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "Mohit",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF2E7D32)
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                "View Profile",
+                                fontSize = 14.sp,
+                                color = Color(0xFF4CAF50),
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_profile),
+                            contentDescription = "User Avatar",
+                            modifier = Modifier
+                                .size(52.dp)
+                                .clip(CircleShape)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // Menu Items with better spacing
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    DrawerItem(
+                        Icons.Outlined.Info,
+                        "About Us",
+                        onClick = { onNavigate(Screen.AboutUs.route) }
+                    )
+
+                    DrawerItem(
+                        Icons.Outlined.Feedback,
+                        "Feedback",
+                        onClick = { onNavigate(Screen.Feedback.route) }
+                    )
+
+                    DrawerItem(
+                        Icons.Outlined.Restaurant,
+                        "Meal History",
+                        onClick = { onNavigate(Screen.MealHistory.route) }
+                    )
+
+                    DrawerItem(
+                        Icons.Outlined.Receipt,
+                        "Log Recipes",
+                        onClick = { onNavigate(Screen.FoodLogging.route) }
+                    )
+
+                    DrawerItem(
+                        Icons.Outlined.Person,
+                        "Profile",
+                        onClick = { onNavigate(Screen.Profile.route) }
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            // Logout section at bottom
+            Column {
+                Divider(
+                    color = Color(0xFFE0E0E0),
+                    thickness = 1.dp,
+                    modifier = Modifier.padding(vertical = 16.dp)
+                )
 
-            DrawerItem(
-                Icons.Outlined.Info,
-                "About Us",
-                onClick = { onNavigate(Screen.AboutUs.route) }
-            )
-            DrawerItem(
-                Icons.Outlined.Feedback,
-                "Feedback",
-                onClick = { onNavigate(Screen.Feedback.route) }
-            )
-            DrawerItem(
-                Icons.Outlined.Restaurant,
-                "Recipes",
-                onClick = { onNavigate(Screen.RecipeGenerator.route) }
-            )
-            DrawerItem(
-                Icons.Outlined.Receipt,
-                "Log Recipes",
-                onClick = { onNavigate(Screen.FoodLogging.route) }
-            )
-            DrawerItem(
-                Icons.Outlined.Person,
-                "Profile",
-                onClick = { onNavigate(Screen.Profile.route)}
-            )
+                DrawerItem(
+                    icon = Icons.Outlined.ExitToApp,
+                    title = "Logout",
+                    onClick = { showLogoutDialog = true },
+                    tint = Color(0xFFE53935),
+                    isLogout = true
+                )
+            }
         }
-
-        DrawerItem(
-            icon = Icons.Outlined.ExitToApp,
-            title = "Logout",
-            onClick = { showLogoutDialog = true }, // Show dialog instead of direct logout
-            tint = Color(0xFF4CAF50)
-        )
     }
 
     // Logout Confirmation Dialog
@@ -126,7 +178,8 @@ fun LogoutConfirmationDialog(
                 .fillMaxWidth()
                 .padding(16.dp),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(8.dp)
         ) {
             Column(
                 modifier = Modifier
@@ -134,11 +187,30 @@ fun LogoutConfirmationDialog(
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Icon
+                Icon(
+                    imageVector = Icons.Outlined.ExitToApp,
+                    contentDescription = "Logout",
+                    tint = Color(0xFFE53935),
+                    modifier = Modifier.size(48.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 Text(
                     text = "Logging out so soon?",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Color.Black,
+                    color = Color(0xFF2E7D32),
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Are you sure you want to logout?",
+                    fontSize = 14.sp,
+                    color = Color.Gray,
                     textAlign = TextAlign.Center
                 )
 
@@ -146,36 +218,38 @@ fun LogoutConfirmationDialog(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Yes Button
-                    Button(
-                        onClick = onConfirm,
+                    // No Button (Cancel)
+                    OutlinedButton(
+                        onClick = onDismiss,
                         modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF8BC34A)
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = Color(0xFF2E7D32)
+                        ),
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp, Color(0xFF2E7D32)
                         ),
                         shape = RoundedCornerShape(8.dp)
                     ) {
                         Text(
-                            text = "Yes",
-                            color = Color.White,
+                            text = "Cancel",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium
                         )
                     }
 
-                    // No Button
+                    // Yes Button (Confirm)
                     Button(
-                        onClick = onDismiss,
+                        onClick = onConfirm,
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF8BC34A)
+                            containerColor = Color(0xFFE53935)
                         ),
                         shape = RoundedCornerShape(8.dp)
                     ) {
                         Text(
-                            text = "No",
+                            text = "Logout",
                             color = Color.White,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium
@@ -188,21 +262,42 @@ fun LogoutConfirmationDialog(
 }
 
 @Composable
-fun DrawerItem(icon: ImageVector, title: String, onClick: () -> Unit, tint: Color = Color.Gray) {
-    Row(
+fun DrawerItem(
+    icon: ImageVector,
+    title: String,
+    onClick: () -> Unit,
+    tint: Color = Color(0xFF666666),
+    isLogout: Boolean = false
+) {
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp)
             .clickable(onClick = onClick),
-        verticalAlignment = Alignment.CenterVertically
+        colors = CardDefaults.cardColors(
+            containerColor = if (isLogout) Color(0xFFFFF5F5) else Color.Transparent
+        ),
+        shape = RoundedCornerShape(8.dp),
+        elevation = CardDefaults.cardElevation(0.dp)
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = title,
-            tint = tint,
-            modifier = Modifier.size(20.dp)
-        )
-        Spacer(modifier = Modifier.width(16.dp))
-        Text(text = title, fontSize = 16.sp, color = Color.Black)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = title,
+                tint = tint,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(20.dp))
+            Text(
+                text = title,
+                fontSize = 16.sp,
+                color = if (isLogout) Color(0xFFE53935) else Color(0xFF2E2E2E),
+                fontWeight = if (isLogout) FontWeight.Medium else FontWeight.Normal
+            )
+        }
     }
 }
