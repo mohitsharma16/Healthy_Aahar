@@ -79,9 +79,6 @@ fun shouldShowBottomNav(route: String?): Boolean {
         Screen.Home.route,
         Screen.DietPlan.route,
         Screen.RecipeGenerator.route,
-        Screen.FoodLogging.route,
-        Screen.MealHistory.route,
-        Screen.NutritionalAnalysis.route,
-        Screen.Profile.route
+        Screen.StatisticsScreen.route
     )
 }
