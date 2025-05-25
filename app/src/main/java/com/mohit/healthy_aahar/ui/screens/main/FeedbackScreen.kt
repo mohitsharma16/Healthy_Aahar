@@ -148,8 +148,6 @@ fun FeedbackScreen(navController: NavController) {
                 }
             }
 
-            // Bottom Navigation is handled elsewhere
-            // Removed as requested
         }
     }
 }
@@ -235,7 +233,6 @@ fun MealTrackingItem(
     }
 }
 
-// Bottom Navigation components removed as requested
 
 @Preview(showBackground = true)
 @Composable
