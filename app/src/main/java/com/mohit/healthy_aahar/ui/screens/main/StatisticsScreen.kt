@@ -30,11 +30,12 @@ import androidx.compose.ui.unit.*
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.mohit.healthy_aahar.R
+import com.mohit.healthy_aahar.ui.theme.Primary600
 import kotlin.math.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StatisticsScreen(navController: NavController) {
+fun StatisticsScreen(navController: NavController,onMenuClick: () -> Unit) {
     var selectedPeriod by remember { mutableStateOf("Weekly") }
     var isDropdownExpanded by remember { mutableStateOf(false) }
     val periods = listOf("Daily", "Weekly")
@@ -64,7 +65,7 @@ fun StatisticsScreen(navController: NavController) {
                 }
             },
             actions = {
-                IconButton(onClick = { /* Handle menu */ }) {
+                IconButton(onClick = { onMenuClick() }) {
                     Icon(
                         Icons.Default.Menu,
                         contentDescription = "Menu",
@@ -73,7 +74,7 @@ fun StatisticsScreen(navController: NavController) {
                 }
             },
             colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = Color(0xFF8BC34A)
+                containerColor = Primary600
             )
         )
 
@@ -656,6 +657,6 @@ fun NutritionCard(
 @Composable
 fun StatisticsScreenPreview() {
     MaterialTheme {
-        StatisticsScreen(navController = rememberNavController())
+        StatisticsScreen(navController = rememberNavController(), onMenuClick = {})
     }
 }
