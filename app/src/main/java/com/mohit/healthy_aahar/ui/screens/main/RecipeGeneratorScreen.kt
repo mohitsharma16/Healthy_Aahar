@@ -32,11 +32,13 @@ import androidx.navigation.compose.rememberNavController
 import com.mohit.healthy_aahar.R
 import com.mohit.healthy_aahar.datastore.UserPreference
 import com.mohit.healthy_aahar.ui.navigation.Screen
+import com.mohit.healthy_aahar.ui.theme.Primary600
+import com.mohit.healthy_aahar.ui.theme.Primary700
 import com.mohit.healthy_aahar.ui.viewmodel.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecipeGeneratorScreen(navController: NavController) {
+fun RecipeGeneratorScreen(navController: NavController, onMenuClick: () -> Unit) {
     val viewModel: MainViewModel = viewModel()
     val context = LocalContext.current
     val uidFlow = remember { UserPreference.getUidFlow(context) }
@@ -75,8 +77,8 @@ fun RecipeGeneratorScreen(navController: NavController) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFF8BC34A))
-                .padding(16.dp)
+                .background(Primary600)
+                .padding(18.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -99,7 +101,10 @@ fun RecipeGeneratorScreen(navController: NavController) {
                 Icon(
                     imageVector = Icons.Default.Menu,
                     contentDescription = "Menu",
-                    tint = Color.White
+                    tint = Color.White,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clickable { onMenuClick() }
                 )
             }
         }
@@ -461,5 +466,5 @@ data class FoodItem(val name: String, val imageRes: Int)
 @Preview(showBackground = true)
 @Composable
 fun PreviewRecipeGeneratorScreen() {
-    RecipeGeneratorScreen(navController = rememberNavController())
+    RecipeGeneratorScreen(navController = rememberNavController(), onMenuClick = {})
 }
