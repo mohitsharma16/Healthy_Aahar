@@ -1,66 +1,176 @@
 package com.mohit.healthy_aahar.ui.screens.main
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BubbleChart
-import androidx.compose.material.icons.filled.EmojiFoodBeverage
-import androidx.compose.material.icons.filled.FitnessCenter
-import androidx.compose.material.icons.filled.Whatshot
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import kotlin.math.max
+import com.mohit.healthy_aahar.R
+import kotlin.math.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatisticsScreen(navController: NavController) {
-    var selectedTab by remember { mutableStateOf(0) }
-    val tabs = listOf("Daily", "Weekly")
+    var selectedPeriod by remember { mutableStateOf("Weekly") }
+    var isDropdownExpanded by remember { mutableStateOf(false) }
+    val periods = listOf("Daily", "Weekly")
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF7F7F7))
-            .padding(16.dp)
+            .background(Color.White)
     ) {
-        TabRow(
-            selectedTabIndex = selectedTab,
-            containerColor = Color.White,
-            contentColor = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.clip(RoundedCornerShape(16.dp))
+        // Top Header
+        TopAppBar(
+            title = {
+                Text(
+                    text = "Dashboards",
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            },
+            navigationIcon = {
+                IconButton(onClick = { navController.popBackStack() }) {
+                    Icon(
+                        Icons.Default.ArrowBack,
+                        contentDescription = "Back",
+                        tint = Color.White
+                    )
+                }
+            },
+            actions = {
+                IconButton(onClick = { /* Handle menu */ }) {
+                    Icon(
+                        Icons.Default.Menu,
+                        contentDescription = "Menu",
+                        tint = Color.White
+                    )
+                }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = Color(0xFF8BC34A)
+            )
+        )
+
+        // Scrollable Content
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
         ) {
-            tabs.forEachIndexed { index, title ->
-                Tab(
-                    selected = selectedTab == index,
-                    onClick = { selectedTab = index },
-                    text = {
-                        Text(
-                            title,
-                            fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal
-                        )
-                    }
+            // Greeting Section
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Profile Image
+                Box(
+                    modifier = Modifier
+                        .size(50.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFE57373)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_profile),
+                        contentDescription = "Profile Picture",
+                        modifier = Modifier.size(40.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Text(
+                    text = "Hey, Mohit",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.Black
                 )
             }
-        }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        when (selectedTab) {
-            0 -> DailyStatsUI()
-            1 -> WeeklyStatsUI()
+            // Journey Section
+            Text(
+                text = "Your Journey..",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.Black
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Period Selector Dropdown
+            ExposedDropdownMenuBox(
+                expanded = isDropdownExpanded,
+                onExpandedChange = { isDropdownExpanded = !isDropdownExpanded }
+            ) {
+                OutlinedTextField(
+                    value = selectedPeriod,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Select Period") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(),
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = isDropdownExpanded)
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFF8BC34A),
+                        unfocusedBorderColor = Color.Gray
+                    )
+                )
+
+                ExposedDropdownMenu(
+                    expanded = isDropdownExpanded,
+                    onDismissRequest = { isDropdownExpanded = false }
+                ) {
+                    periods.forEach { period ->
+                        DropdownMenuItem(
+                            text = { Text(period) },
+                            onClick = {
+                                selectedPeriod = period
+                                isDropdownExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Content based on selected period
+            when (selectedPeriod) {
+                "Daily" -> DailyStatsUI()
+                "Weekly" -> WeeklyStatsUI()
+            }
         }
     }
 }
@@ -68,129 +178,484 @@ fun StatisticsScreen(navController: NavController) {
 @Composable
 fun DailyStatsUI() {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text("Today's Overview", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        // Daily Measurements
+        WeightMeasurementsCard(
+            title = "Daily Measurements",
+            predicted = "77.8 Kg",
+            actual = "77.8 Kg",
+            isDaily = true
+        )
 
-        StatCard("Calories", 1400, 2000, Color(0xFFE91E63), Icons.Default.Whatshot)
-        StatCard("Protein", 60, 100, Color(0xFF2196F3), Icons.Default.FitnessCenter)
-        StatCard("Carbs", 180, 300, Color(0xFF4CAF50), Icons.Default.BubbleChart)
-        StatCard("Fat", 50, 70, Color(0xFFFF9800), Icons.Default.EmojiFoodBeverage)
-    }
-}
-
-@Composable
-fun StatCard(title: String, value: Int, goal: Int, color: Color, icon: ImageVector) {
-    val progress = value / goal.toFloat()
-
-    Card(
-        shape = RoundedCornerShape(16.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(110.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(4.dp)
-    ) {
-        Row(
-            Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(40.dp))
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                Text("$value / $goal", fontSize = 14.sp, color = Color.Gray)
-                LinearProgressIndicator(
-                    progress = progress.coerceIn(0f, 1f),
-                    color = color,
-                    trackColor = color.copy(alpha = 0.2f),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(8.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                )
-            }
-        }
+        // Daily Tracker
+        DailyTrackerCard()
     }
 }
 
 @Composable
 fun WeeklyStatsUI() {
-    Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
-        Text("Weekly Trends", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-
-        WeeklyLineChart(
-            title = "Calories",
-            data = listOf(1800, 1900, 1700, 2000, 2100, 1600, 1850),
-            color = Color(0xFFE91E63)
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        // Weekly Measurements
+        WeightMeasurementsCard(
+            title = "Weekly Measurements",
+            predicted = "77.8 Kg",
+            actual = "77.8 Kg",
+            isDaily = false
         )
 
-        WeeklyLineChart(
-            title = "Protein",
-            data = listOf(65, 70, 60, 80, 75, 55, 68),
-            color = Color(0xFF2196F3)
-        )
-
-        WeeklyLineChart(
-            title = "Carbs",
-            data = listOf(200, 220, 180, 250, 240, 190, 210),
-            color = Color(0xFF4CAF50)
-        )
-
-        WeeklyLineChart(
-            title = "Fat",
-            data = listOf(50, 55, 48, 60, 58, 45, 52),
-            color = Color(0xFFFF9800)
-        )
+        // Weekly Tracker
+        WeeklyTrackerCard()
     }
 }
 
 @Composable
-fun WeeklyLineChart(title: String, data: List<Int>, color: Color) {
-    val maxY = (data.maxOrNull() ?: 1).toFloat()
-
-    Column {
-        Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-        Canvas(modifier = Modifier
+fun WeightMeasurementsCard(
+    title: String,
+    predicted: String,
+    actual: String,
+    isDaily: Boolean
+) {
+    Card(
+        modifier = Modifier
             .fillMaxWidth()
-            .height(150.dp)
-            .background(Color.White, RoundedCornerShape(12.dp))
-            .padding(8.dp)) {
-
-            val spacing = size.width / (data.size - 1)
-            val points = data.mapIndexed { index, value ->
-                Offset(x = index * spacing, y = size.height - (value / maxY) * size.height)
+            .height(200.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F8E9)),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = title,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.Black
+                )
+                Icon(
+                    Icons.Default.OpenInFull,
+                    contentDescription = "Expand",
+                    tint = Color.Gray,
+                    modifier = Modifier.size(16.dp)
+                )
             }
 
-            // Draw line
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row {
+                Column {
+                    Text(
+                        text = "Weight",
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Predicted",
+                        fontSize = 10.sp,
+                        color = Color.Gray
+                    )
+                    Text(
+                        text = predicted,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Actual",
+                        fontSize = 10.sp,
+                        color = Color.Gray
+                    )
+                    Text(
+                        text = actual,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                // Weight chart
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(120.dp)
+                ) {
+                    WeightLineChart(isDaily = isDaily)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun WeightLineChart(isDaily: Boolean) {
+    val data = if (isDaily) {
+        // Daily data for 24 hours
+        listOf(77.8f, 77.9f, 77.7f, 77.8f, 77.9f, 78.0f, 77.8f, 77.7f, 77.8f, 77.9f, 78.0f, 77.8f)
+    } else {
+        // Weekly data for 7 days
+        listOf(78.2f, 78.0f, 77.8f, 77.9f, 77.7f, 77.8f, 77.8f)
+    }
+
+    Canvas(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        val maxY = data.maxOrNull() ?: 78.5f
+        val minY = data.minOrNull() ?: 77.5f
+        val range = maxY - minY
+        val adjustedRange = if (range < 0.5f) 0.5f else range
+
+        val spacing = size.width / (data.size - 1)
+        val points = data.mapIndexed { index, value ->
+            val normalizedValue = (value - minY) / adjustedRange
+            Offset(
+                x = index * spacing,
+                y = size.height - (normalizedValue * size.height * 0.8f) - (size.height * 0.1f)
+            )
+        }
+
+        // Draw line
+        if (points.size > 1) {
+            val path = Path().apply {
+                moveTo(points.first().x, points.first().y)
+                for (i in 1 until points.size) {
+                    val cp1 = Offset(
+                        (points[i - 1].x + points[i].x) / 2,
+                        points[i - 1].y
+                    )
+                    val cp2 = Offset(
+                        (points[i - 1].x + points[i].x) / 2,
+                        points[i].y
+                    )
+                    cubicTo(cp1.x, cp1.y, cp2.x, cp2.y, points[i].x, points[i].y)
+                }
+            }
+
             drawPath(
-                path = Path().apply {
-                    moveTo(points.first().x, points.first().y)
-                    for (point in points.drop(1)) {
-                        lineTo(point.x, point.y)
-                    }
-                },
-                color = color,
-                style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round)
+                path = path,
+                color = Color(0xFFFFB74D),
+                style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
+            )
+        }
+
+        // Draw points
+        points.forEach { point ->
+            drawCircle(
+                color = Color(0xFFFFB74D),
+                center = point,
+                radius = 4.dp.toPx()
+            )
+        }
+    }
+}
+
+@Composable
+fun DailyTrackerCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F8E9)),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                text = "Daily Tracker",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
             )
 
-            // Draw points
-            points.forEach {
-                drawCircle(
-                    color = color,
-                    center = it,
-                    radius = 6.dp.toPx()
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Main Calories Circle
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier.size(120.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        progress = 0.6f, // 60% for daily
+                        modifier = Modifier.size(120.dp),
+                        strokeWidth = 8.dp,
+                        color = Color(0xFF8BC34A),
+                        trackColor = Color(0xFFE8F5E8)
+                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.LocalFireDepartment,
+                                contentDescription = "Calories",
+                                tint = Color.Black,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Calories",
+                                fontSize = 12.sp,
+                                color = Color.Black
+                            )
+                        }
+                        Text(
+                            text = "60%",
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column {
+                    Text(
+                        text = "Predicted",
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                    Text(
+                        text = "1,284",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Actual",
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                    Text(
+                        text = "890",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Nutrition cards row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                NutritionCard(
+                    title = "Calorie",
+                    value = "451/2050",
+                    unit = "kcal",
+                    modifier = Modifier.weight(1f)
+                )
+                NutritionCard(
+                    title = "Protein",
+                    value = "281/356",
+                    unit = "gm",
+                    modifier = Modifier.weight(1f)
+                )
+                NutritionCard(
+                    title = "Carbs",
+                    value = "45/500",
+                    unit = "gm",
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
     }
 }
+
+@Composable
+fun WeeklyTrackerCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F8E9)),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                text = "Weekly Tracker",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Main Calories Circle
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier.size(120.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        progress = 0.8f, // 80% for weekly as shown in UI
+                        modifier = Modifier.size(120.dp),
+                        strokeWidth = 8.dp,
+                        color = Color(0xFF8BC34A),
+                        trackColor = Color(0xFFE8F5E8)
+                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.LocalFireDepartment,
+                                contentDescription = "Calories",
+                                tint = Color.Black,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Calories",
+                                fontSize = 12.sp,
+                                color = Color.Black
+                            )
+                        }
+                        Text(
+                            text = "80%",
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column {
+                    Text(
+                        text = "Predicted",
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                    Text(
+                        text = "1,284",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Actual",
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                    Text(
+                        text = "890",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Nutrition cards row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                NutritionCard(
+                    title = "Calorie",
+                    value = "451/2050",
+                    unit = "kcal",
+                    modifier = Modifier.weight(1f)
+                )
+                NutritionCard(
+                    title = "Protein",
+                    value = "281/356",
+                    unit = "gm",
+                    modifier = Modifier.weight(1f)
+                )
+                NutritionCard(
+                    title = "Carbs",
+                    value = "45/500",
+                    unit = "gm",
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun NutritionCard(
+    title: String,
+    value: String,
+    unit: String,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.height(80.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(8.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Default.Circle,
+                    contentDescription = null,
+                    tint = Color(0xFF8BC34A),
+                    modifier = Modifier.size(8.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = title,
+                    fontSize = 10.sp,
+                    color = Color.Black
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = value,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+            Text(
+                text = unit,
+                fontSize = 10.sp,
+                color = Color.Gray
+            )
+        }
+    }
+}
+
+
+
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun StatisticsScreenPreview() {
     MaterialTheme {
-        StatisticsScreen(navController= rememberNavController() )
+        StatisticsScreen(navController = rememberNavController())
     }
 }
