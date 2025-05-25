@@ -30,4 +30,10 @@ object UserPreference {
             it.remove(UID_KEY)
         }
     }
+    // Clear all user data (for logout functionality)
+    suspend fun clearUserData(context: Context) {
+        context.dataStore.edit { prefs ->
+            prefs.clear() // This will clear all stored preferences
+        }
+    }
 }
