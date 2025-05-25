@@ -19,4 +19,7 @@ sealed class Screen(val route: String) {
     // **Profile & Settings Screens**
     object Profile : Screen("profile_screen")
     object Settings : Screen("settings_screen")
+
+    object AboutUs : Screen( "aboutus_screen")
+    object Feedback : Screen( "feedback_screen")
 }

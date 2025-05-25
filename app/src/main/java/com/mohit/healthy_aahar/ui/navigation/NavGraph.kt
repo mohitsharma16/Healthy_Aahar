@@ -1,6 +1,7 @@
 package com.mohit.healthy_aahar.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -11,9 +12,10 @@ import com.mohit.healthy_aahar.ui.screens.main.*
 import com.mohit.healthy_aahar.ui.screens.profile.*
 
 @Composable
-fun AppNavGraph(navController: NavHostController , authRepository: AuthRepository) {
+fun AppNavGraph(navController: NavHostController, authRepository: AuthRepository, onMenuClick: () -> Unit) {
     NavHost(navController = navController,
-        startDestination = Screen.Onboarding.route, ) {
+        startDestination = Screen.Onboarding.route,
+        ) {
 
         // **Onboarding & Authentication Flow**
         composable(Screen.Onboarding.route) {
@@ -46,7 +48,7 @@ fun AppNavGraph(navController: NavHostController , authRepository: AuthRepositor
 
         // **Main Screens (With Bottom Navigation)**
         composable(Screen.Home.route) {
-            HomeScreen(navController)
+            HomeScreen(navController, onMenuClick)
         }
         composable(Screen.DietPlan.route) {
             DietPlanScreen(navController)
@@ -72,6 +74,14 @@ fun AppNavGraph(navController: NavHostController , authRepository: AuthRepositor
                     popUpTo(Screen.Profile.route) { inclusive = true } // 🔹 Clears profile screen from back stack
                 }
             })
+        }
+
+        composable(Screen.AboutUs.route){
+            AboutUsScreen()
+        }
+
+        composable(Screen.Feedback.route){
+            FeedbackScreen(navController)
         }
         composable(Screen.Settings.route) {
             SettingsScreen(navController)
