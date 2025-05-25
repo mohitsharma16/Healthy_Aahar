@@ -32,9 +32,10 @@ fun BottomNavBar(navController: NavController, isVisible: Boolean) {
 
     val navItems = listOf(
         BottomNavItem("Home", Screen.Home.route, Icons.Filled.Home),
-        BottomNavItem("Diet Plan", Screen.DietPlan.route, Icons.Filled.Restaurant),
+        BottomNavItem("Diet Plan", Screen.DietPlan.route, Icons.Filled.Dining),
+        BottomNavItem("Dashboard", Screen.StatisticsScreen.route, Icons.Filled.Dashboard),
         BottomNavItem("Recipes", Screen.RecipeGenerator.route, Icons.Filled.Fastfood),
-        BottomNavItem("Profile", Screen.Profile.route, Icons.Filled.Person)
+
     )
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
