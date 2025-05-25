@@ -51,16 +51,16 @@ fun AppNavGraph(navController: NavHostController, authRepository: AuthRepository
             HomeScreen(navController, onMenuClick)
         }
         composable(Screen.DietPlan.route) {
-            DietPlanScreen(navController)
+            DietPlanScreen(navController, onMenuClick)
         }
         composable(Screen.RecipeGenerator.route) {
-            RecipeGeneratorScreen(navController)
+            RecipeGeneratorScreen(navController, onMenuClick)
         }
         composable(Screen.MealHistory.route) {
             MealHistoryScreen(navController)
         }
         composable(Screen.StatisticsScreen.route) {
-            StatisticsScreen(navController)
+            StatisticsScreen(navController, onMenuClick)
         }
         composable(Screen.FoodLogging.route){
             FoodLoggingScreen(navController)
@@ -72,7 +72,7 @@ fun AppNavGraph(navController: NavHostController, authRepository: AuthRepository
 
         // **Profile & Settings**
         composable(Screen.Profile.route) {
-            ProfileScreen(onSignOut = {
+            ProfileScreen( navController ,onSignOut = {
                 navController.navigate(Screen.Login.route) {
                     popUpTo(Screen.Profile.route) { inclusive = true } // 🔹 Clears profile screen from back stack
                 }
@@ -80,7 +80,7 @@ fun AppNavGraph(navController: NavHostController, authRepository: AuthRepository
         }
 
         composable(Screen.AboutUs.route){
-            AboutUsScreen()
+            AboutUsScreen(navController)
         }
 
         composable(Screen.Feedback.route){
