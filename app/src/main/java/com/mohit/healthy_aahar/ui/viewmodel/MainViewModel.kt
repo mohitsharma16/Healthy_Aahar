@@ -72,11 +72,11 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun getMealPlan(userName: String) {
+    fun getMealPlan(uid: String) {
         viewModelScope.launch {
             try {
-                Log.d("API", "Fetching meal plan for $userName")
-                val response = api.generateMealPlan(userName)
+                Log.d("API", "Fetching meal plan for $uid")
+                val response = api.generateMealPlan(uid)
                 Log.d("API", "Meal plan response code: ${response.code()}")
 
                 if (response.isSuccessful) {
