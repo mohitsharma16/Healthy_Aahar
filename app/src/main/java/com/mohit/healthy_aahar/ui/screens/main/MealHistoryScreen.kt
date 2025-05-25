@@ -25,6 +25,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.mohit.healthy_aahar.ui.theme.Primary600
+import com.mohit.healthy_aahar.ui.theme.Primary700
 
 data class MealItem(
     val id: Int,
@@ -71,17 +73,8 @@ fun MealHistoryScreen(navController: NavController) {
                         )
                     }
                 },
-                actions = {
-                    IconButton(onClick = { /* Handle menu */ }) {
-                        Icon(
-                            Icons.Default.Menu,
-                            contentDescription = "Menu",
-                            tint = Color.White
-                        )
-                    }
-                },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF8BC34A) // Green color from the image
+                    containerColor = Primary600 // Green color from the image
                 )
             )
         }
@@ -95,12 +88,12 @@ fun MealHistoryScreen(navController: NavController) {
             TabRow(
                 selectedTabIndex = selectedTabIndex,
                 containerColor = Color.White,
-                contentColor = Color(0xFF8BC34A),
+                contentColor = Primary700,
                 indicator = { tabPositions ->
                     TabRowDefaults.Indicator(
                         Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
-                        color = Color(0xFF8BC34A),
-                        height = 3.dp
+                        color = Primary600,
+                        height = 4.dp
                     )
                 }
             ) {
