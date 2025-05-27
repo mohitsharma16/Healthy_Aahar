@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Restaurant
@@ -272,10 +273,18 @@ fun RecommendedMealsSection(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MealCard(meal: Meal, viewModel: MainViewModel, uid: String?) {
     val context = LocalContext.current
     val today = remember { java.time.LocalDate.now().toString() }
+    var selectedMealType by remember { mutableStateOf("Breakfast") }
+    var showDropdown by remember { mutableStateOf(false) }
+//    var isMealLogged by remember { mutableStateOf(false) }
+    var isLogging by remember { mutableStateOf(false) }
+
+    val mealTypes = listOf("Breakfast", "Lunch", "Dinner", "Snack")
+    val isMealLogged = meal.isLogged == true
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -328,27 +337,112 @@ fun MealCard(meal: Meal, viewModel: MainViewModel, uid: String?) {
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
+            // Meal Type Dropdown
+            Column {
+                Text(
+                    "Select Meal Type:",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = if (isMealLogged) Color.Gray else Color.Black,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+
+                ExposedDropdownMenuBox(
+                    expanded = showDropdown,
+                    onExpandedChange = {
+                        if (!isMealLogged) {
+                            showDropdown = !showDropdown
+                        }
+                    }
+                ) {
+                    OutlinedTextField(
+                        value = selectedMealType,
+                        onValueChange = { },
+                        readOnly = true,
+                        enabled = !isMealLogged,
+                        trailingIcon = {
+                            Icon(
+                                Icons.Default.ArrowDropDown,
+                                contentDescription = "Dropdown",
+                                tint = if (isMealLogged) Color.Gray else Color.Black
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF8FBC8F),
+                            unfocusedBorderColor = Color.Gray,
+                            disabledBorderColor = Color.LightGray,
+                            disabledTextColor = Color.Gray
+                        )
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = showDropdown,
+                        onDismissRequest = { showDropdown = false }
+                    ) {
+                        mealTypes.forEach { mealType ->
+                            DropdownMenuItem(
+                                text = { Text(mealType) },
+                                onClick = {
+                                    selectedMealType = mealType
+                                    showDropdown = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
             // Log Meal Button
             Button(
                 onClick = {
-                    uid?.let {
-                        viewModel.logMeal(it, meal._id, today) { success ->
-                            val msg = if (success) "Meal logged successfully!" else "Failed to log meal"
-                            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                    if (uid != null && !isMealLogged) {
+                        isLogging = true
+                        viewModel.logMeal(uid, meal._id, today, selectedMealType) { success ->
+                            isLogging = false
+                            if (success) {
+                                Toast.makeText(context, "Meal logged successfully!", Toast.LENGTH_SHORT).show()
+                                viewModel.getMealPlan(uid)
+                            } else {
+                                Toast.makeText(context, "Failed to log meal", Toast.LENGTH_SHORT).show()
+                            }
                         }
                     }
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8FBC8F)),
+                enabled = !isMealLogged && !isLogging,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isMealLogged) Color.Gray else Color(0xFF8FBC8F),
+                    disabledContainerColor = Color.Gray,
+                    disabledContentColor = Color.White
+                ),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                Text(
-                    "Log Meal",
-                    color = Color.White,
-                    fontWeight = FontWeight.Medium
-                )
+                if (isLogging) {
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Logging...", color = Color.White)
+                    }
+                } else {
+                    Text(
+                        if (isMealLogged) "Meal Already Logged" else "Log Meal",
+                        color = Color.White
+                    )
+                }
             }
+
         }
     }
 }
-
