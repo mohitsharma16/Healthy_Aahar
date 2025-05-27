@@ -16,6 +16,7 @@ import com.mohit.healthy_aahar.model.SwapMealRequest
 import com.mohit.healthy_aahar.model.User
 import com.mohit.healthy_aahar.model.UserDetails
 import com.mohit.healthy_aahar.network.RetrofitClient
+import com.mohit.healthy_aahar.network.RetrofitClient.apiService
 import kotlinx.coroutines.launch
 
 class MainViewModel : ViewModel() {
@@ -165,27 +166,33 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun logMeal(uid: String, mealId: String, date: String, onResult: (Boolean) -> Unit) {
+    // Add this updated logMeal function to your MainViewModel
+
+    fun logMeal(
+        uid: String,
+        mealId: String,
+        date: String,
+        mealType: String,
+        onResult: (Boolean) -> Unit
+    ) {
         viewModelScope.launch {
             try {
-                Log.d("API", "Logging meal: $mealId for $uid on $date")
-                val response = api.logMeal(LogMealRequest(uid, mealId, date))
+                val request = LogMealRequest(
+                    uid = uid,
+                    meal_id = mealId,
+                    date = date,
+                    meal_type = mealType
+                )
+
+                val response = apiService.logMeal(request)
 
                 if (response.isSuccessful) {
-                    val msg = response.body()?.get("message")?.toString()
-                    _logMealResponse.value = msg ?: "Meal logged!"
                     onResult(true)
-                    Log.d("API", "Meal logged: $msg")
                 } else {
-                    val err = response.errorBody()?.string()
-                    _error.value = "Log failed: $err"
                     onResult(false)
-                    Log.e("API", "Error: $err")
                 }
             } catch (e: Exception) {
-                _error.value = e.message
                 onResult(false)
-                Log.e("API", "Exception: ${e.message}")
             }
         }
     }
