@@ -11,5 +11,6 @@ data class Meal(
     val Calories: Float,
     val Protein: String,
     val Fat: String,
-    val Carbs: String
+    val Carbs: String,
+    val isLogged: Boolean
 )
