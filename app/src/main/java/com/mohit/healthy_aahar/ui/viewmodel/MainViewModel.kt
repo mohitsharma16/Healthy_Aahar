@@ -81,6 +81,7 @@ class MainViewModel : ViewModel() {
     }
 
     fun getMealPlan(uid: String) {
+        _isLoading.value = true
         viewModelScope.launch {
             try {
                 Log.d("API", "Fetching meal plan for $uid")
@@ -98,6 +99,9 @@ class MainViewModel : ViewModel() {
             } catch (e: Exception) {
                 _error.value = e.message
                 Log.e("API", "Exception: ${e.message}")
+            }finally {
+                // IMPORTANT: Always set loading to false when done
+                _isLoading.value = false
             }
         }
     }
