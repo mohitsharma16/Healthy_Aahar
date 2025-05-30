@@ -294,18 +294,20 @@ fun TodaysMealsSection(
         if (meals.isEmpty()) {
             Text(text = "No meals planned for today.")
         } else {
-            // FIXED: Use regular Column instead of LazyColumn to avoid nesting scroll conflicts
             Column {
                 meals.forEach { meal ->
                     MealCard(
                         mealName = meal.TranslatedRecipeName,
-                        mealTime = "",  // You don't have a specific time in the model; could be empty or infer if you want
+                        mealTime = "",
                         calories = meal.Calories.toInt().toString(),
                         protein = meal.Protein.toString(),
                         carbs = meal.Carbs.toString(),
                         fats = meal.Fat.toString(),
-                        imageRes = R.drawable.ic_food_placeholder, // Placeholder as you don't have image URL or resource
-                        onClick = { navController.navigate(Screen.NutritionalAnalysis.route) }
+                        imageRes = R.drawable.ic_food_placeholder,
+                        // Pass the recipe ID when navigating
+                        onClick = {
+                            navController.navigate("${Screen.NutritionalAnalysis.route}/${meal._id}")
+                        }
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                 }
