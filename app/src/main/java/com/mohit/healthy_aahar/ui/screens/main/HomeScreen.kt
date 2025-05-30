@@ -53,11 +53,13 @@ fun HomeScreen(navController: NavController, onMenuClick: () -> Unit, viewModel:
     val uid by uidFlow.collectAsState(initial = null)
     val mealPlan by viewModel.mealPlan.observeAsState()
     val error by viewModel.error.observeAsState()
+    val isLoading by viewModel.isLoading.observeAsState(false)
 
     // Trigger the API call only once when the screen loads
     LaunchedEffect(uid) {
         uid?.let { viewModel.getMealPlan(it) }
     }
+
 
     Column(
         modifier = Modifier
@@ -72,7 +74,7 @@ fun HomeScreen(navController: NavController, onMenuClick: () -> Unit, viewModel:
         DailyTrackerSection()
 
         // Today's Meals Section
-        TodaysMealsSection(navController, meals = mealPlan?.meal_plan ?: emptyList())
+        TodaysMealsSectionWithSkeleton(navController, meals = mealPlan?.meal_plan ?: emptyList(), isLoading = isLoading)
 
         // Bottom Navigation Spacer (to account for the bottom nav bar)
         Spacer(modifier = Modifier.height(80.dp))
@@ -273,10 +275,108 @@ fun NutritionTrackerCard(
     }
 }
 
+// Alternative approach with shimmer-like loading cards
+// Add this to your TodaysMealsSection when isLoading is true
+
 @Composable
-fun TodaysMealsSection(
+fun MealCardSkeleton() {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(120.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFF8FCF8)
+        ),
+        elevation = CardDefaults.cardElevation(2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(12.dp)
+                .fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Image placeholder
+            Box(
+                modifier = Modifier
+                    .size(60.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color.LightGray.copy(alpha = 0.3f))
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                // Title placeholder
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.7f)
+                        .height(16.dp)
+                        .background(
+                            Color.LightGray.copy(alpha = 0.3f),
+                            RoundedCornerShape(4.dp)
+                        )
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Subtitle placeholder
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.4f)
+                        .height(12.dp)
+                        .background(
+                            Color.LightGray.copy(alpha = 0.2f),
+                            RoundedCornerShape(4.dp)
+                        )
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Nutrition info placeholders
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    repeat(3) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .width(30.dp)
+                                    .height(12.dp)
+                                    .background(
+                                        Color.LightGray.copy(alpha = 0.2f),
+                                        RoundedCornerShape(4.dp)
+                                    )
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Box(
+                                modifier = Modifier
+                                    .width(40.dp)
+                                    .height(10.dp)
+                                    .background(
+                                        Color.LightGray.copy(alpha = 0.15f),
+                                        RoundedCornerShape(4.dp)
+                                    )
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Updated TodaysMealsSection with skeleton loading
+@Composable
+fun TodaysMealsSectionWithSkeleton(
     navController: NavController,
-    meals: List<Meal>
+    meals: List<Meal>,
+    isLoading: Boolean = false
 ) {
     Column(
         modifier = Modifier
@@ -291,25 +391,56 @@ fun TodaysMealsSection(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (meals.isEmpty()) {
-            Text(text = "No meals planned for today.")
-        } else {
-            Column {
-                meals.forEach { meal ->
-                    MealCard(
-                        mealName = meal.TranslatedRecipeName,
-                        mealTime = "",
-                        calories = meal.Calories.toInt().toString(),
-                        protein = meal.Protein.toString(),
-                        carbs = meal.Carbs.toString(),
-                        fats = meal.Fat.toString(),
-                        imageRes = R.drawable.ic_food_placeholder,
-                        // Pass the recipe ID when navigating
-                        onClick = {
-                            navController.navigate("${Screen.NutritionalAnalysis.route}/${meal._id}")
-                        }
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
+        when {
+            isLoading -> {
+                // Show skeleton cards
+                Column {
+                    repeat(3) { // Show 3 skeleton cards
+                        MealCardSkeleton()
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                }
+            }
+            meals.isEmpty() -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "🍽️",
+                            fontSize = 32.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "No meals planned for today",
+                            fontSize = 16.sp,
+                            color = Color.Gray
+                        )
+                    }
+                }
+            }
+            else -> {
+                Column {
+                    meals.forEach { meal ->
+                        MealCard(
+                            mealName = meal.TranslatedRecipeName,
+                            mealTime = "",
+                            calories = meal.Calories.toInt().toString(),
+                            protein = meal.Protein.toString(),
+                            carbs = meal.Carbs.toString(),
+                            fats = meal.Fat.toString(),
+                            imageRes = R.drawable.ic_food_placeholder,
+                            onClick = {
+                                navController.navigate("${Screen.NutritionalAnalysis.route}/${meal._id}")
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
                 }
             }
         }
