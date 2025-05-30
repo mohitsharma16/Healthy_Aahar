@@ -51,6 +51,28 @@ interface ApiService {
         @Body feedback: FeedbackRequest
     ): Response<Map<String, Any>>
 
+    // ==================== LATEST ENDPOINTS ====================
 
+    @GET("get_recipe/{recipe_id}")
+    suspend fun getRecipeDetails(
+        @Path("recipe_id") recipeId: String
+    ): Response<RecipeDetails>
+
+    @GET("get_recipe_with_feedback/{recipe_id}")
+    suspend fun getRecipeWithFeedback(
+        @Path("recipe_id") recipeId: String
+    ): Response<RecipeWithFeedback>
+
+    @GET("get_recipes_by_cuisine/{cuisine}")
+    suspend fun getRecipesByCuisine(
+        @Path("cuisine") cuisine: String,
+        @Query("limit") limit: Int = 10
+    ): Response<List<RecipeDetails>>
+
+    @GET("search_recipes")
+    suspend fun searchRecipes(
+        @Query("query") query: String,
+        @Query("limit") limit: Int = 10
+    ): Response<RecipeSearchResponse>
 }
 
