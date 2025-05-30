@@ -3,8 +3,10 @@ package com.mohit.healthy_aahar.ui.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.google.firebase.auth.oAuthCredential
 import com.mohit.healthy_aahar.repository.AuthRepository
 import com.mohit.healthy_aahar.ui.screens.auth.*
@@ -65,8 +67,15 @@ fun AppNavGraph(navController: NavHostController, authRepository: AuthRepository
         composable(Screen.FoodLogging.route){
             FoodLoggingScreen(navController)
         }
-        composable(Screen.NutritionalAnalysis.route) {
-            NutritionalAnalysisScreen(navController)
+        composable(
+            route = "nutritional_analysis/{recipeId}",
+            arguments = listOf(navArgument("recipeId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val recipeId = backStackEntry.arguments?.getString("recipeId") ?: ""
+            NutritionalAnalysisScreen(
+                navController = navController,
+                recipeId = recipeId
+            )
         }
 
 
