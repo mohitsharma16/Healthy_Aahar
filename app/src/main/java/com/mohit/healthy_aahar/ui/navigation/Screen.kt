@@ -14,7 +14,7 @@ sealed class Screen(val route: String) {
     object FoodLogging : Screen("food_logging_screen")
     object MealHistory : Screen("meal_history_screen")
     object StatisticsScreen : Screen("statistics_screen")
-    object NutritionalAnalysis : Screen("nutritional_analysis_screen")
+//    object NutritionalAnalysis : Screen("nutritional_analysis_screen")
 
     // **Profile & Settings Screens**
     object Profile : Screen("profile_screen")
@@ -22,4 +22,9 @@ sealed class Screen(val route: String) {
 
     object AboutUs : Screen( "aboutus_screen")
     object Feedback : Screen( "feedback_screen")
+
+    object NutritionalAnalysis : Screen("nutritional_analysis") {
+        const val routeWithArgs = "nutritional_analysis/{recipeId}"
+        fun createRoute(recipeId: String) = "nutritional_analysis/$recipeId"
+    }
 }
