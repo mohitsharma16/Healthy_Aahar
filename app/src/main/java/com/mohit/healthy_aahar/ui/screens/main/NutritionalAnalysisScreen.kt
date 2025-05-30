@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,12 +24,85 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.mohit.healthy_aahar.R
 import com.mohit.healthy_aahar.ui.theme.GreenBackground
+import com.mohit.healthy_aahar.ui.viewmodel.MainViewModel
 
 @Composable
-fun NutritionalAnalysisScreen(navController: NavController) {
+fun NutritionalAnalysisScreen(
+    navController: NavController,
+    recipeId: String,
+    viewModel: MainViewModel = viewModel()
+) {
+    val recipeDetails by viewModel.recipeDetails.observeAsState()
+    val isLoading by viewModel.isLoadingRecipe.observeAsState(false)
+    val error by viewModel.error.observeAsState()
+
+    // Fetch recipe details when screen loads
+    LaunchedEffect(recipeId) {
+        if (recipeId.isNotEmpty()) {
+            viewModel.getRecipeDetails(recipeId)
+        }
+    }
+
+    // Clear recipe details when leaving screen
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.clearRecipeDetails()
+        }
+    }
+
+    if (isLoading) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    if (error != null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "Error loading recipe",
+                    fontSize = 18.sp,
+                    color = Color.Red
+                )
+                Text(
+                    text = error ?: "Unknown error",
+                    fontSize = 14.sp,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+                Button(
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier.padding(top = 16.dp)
+                ) {
+                    Text("Go Back")
+                }
+            }
+        }
+        return
+    }
+
+    val recipe = recipeDetails
+    if (recipe == null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("Recipe not found")
+        }
+        return
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -59,7 +133,7 @@ fun NutritionalAnalysisScreen(navController: NavController) {
                 Spacer(modifier = Modifier.width(8.dp))
 
                 Text(
-                    text = "Scrambled eggs",
+                    text = recipe.TranslatedRecipeName,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Medium,
                     color = Color.White,
@@ -89,6 +163,28 @@ fun NutritionalAnalysisScreen(navController: NavController) {
                 .height(220.dp)
         )
 
+        // Recipe Info Section
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FCF8))
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    InfoItem(label = "Cuisine", value = recipe.Cuisine)
+                    InfoItem(label = "Cook Time", value = "${recipe.TotalTimeInMins} mins")
+                    InfoItem(label = "Calories", value = "${recipe.Calories} kcal")
+                }
+            }
+        }
+
         // Nutrition information row
         Row(
             modifier = Modifier
@@ -97,52 +193,26 @@ fun NutritionalAnalysisScreen(navController: NavController) {
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             NutrientInfoBar(
-                value = "25g",
+                value = "${recipe.Protein}g",
                 label = "Protein",
                 barColor = Color(0xFF8EB989),
                 modifier = Modifier.weight(1f)
             )
 
             NutrientInfoBar(
-                value = "32g",
+                value = "${recipe.Carbs}g",
                 label = "Carbs",
                 barColor = Color(0xFF8EB989),
                 modifier = Modifier.weight(1f)
             )
 
             NutrientInfoBar(
-                value = "14g",
+                value = "${recipe.Fat}g",
                 label = "Fats",
                 barColor = Color(0xFF8EB989),
                 modifier = Modifier.weight(1f)
             )
         }
-
-        // Ingredients section
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-        ) {
-            Text(
-                text = "Ingredients",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-
-            IngredientsList(
-                items = listOf(
-                    "2 eggs",
-                    "1 tbsp oil",
-                    "Pinch of salt",
-                    "Pinch of black pepper",
-                    "Green onion"
-                )
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
 
         // Instructions section
         Column(
@@ -157,19 +227,76 @@ fun NutritionalAnalysisScreen(navController: NavController) {
                 modifier = Modifier.padding(vertical = 8.dp)
             )
 
-            InstructionsList(
-                items = listOf(
-                    "Crack the eggs into a bowl.",
-                    "Whisk them thoroughly with a fork or whisk until fully blended.",
-                    "(If you like them extra soft, add 1–2 tbsp milk.)",
-                    "Heat a non-stick pan over medium-low heat. Pour the eggs into the pan. Wait 10–15 seconds without touching.",
-                    "Gently use a spatula, pushing eggs from edges to center."
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FCF8))
+            ) {
+                Text(
+                    text = recipe.TranslatedInstructions,
+                    modifier = Modifier.padding(16.dp),
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp
                 )
-            )
+            }
+        }
+
+        // Rating Section (if available)
+        if (recipe.average_rating > 0) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FCF8))
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "Rating",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "⭐ ${String.format("%.1f", recipe.average_rating)} ",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "(${recipe.feedback_count} reviews)",
+                            fontSize = 14.sp,
+                            color = Color.Gray
+                        )
+                    }
+                }
+            }
         }
 
         // Add spacer at the bottom for the navigation bar
         Spacer(modifier = Modifier.height(80.dp))
+    }
+}
+
+@Composable
+fun InfoItem(label: String, value: String) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = value,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium
+        )
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            color = Color.Gray
+        )
     }
 }
 
@@ -208,56 +335,8 @@ fun NutrientInfoBar(
     }
 }
 
-@Composable
-fun IngredientsList(items: List<String>) {
-    Column(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        items.forEach { item ->
-            Row(
-                verticalAlignment = Alignment.Top,
-                modifier = Modifier.padding(vertical = 4.dp)
-            ) {
-                Text(
-                    text = "• ",
-                    fontWeight = FontWeight.Bold
-                )
-
-                Text(
-                    text = item,
-                    modifier = Modifier.padding(start = 4.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun InstructionsList(items: List<String>) {
-    Column(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        items.forEach { item ->
-            Row(
-                verticalAlignment = Alignment.Top,
-                modifier = Modifier.padding(vertical = 4.dp)
-            ) {
-                Text(
-                    text = "• ",
-                    fontWeight = FontWeight.Bold
-                )
-
-                Text(
-                    text = item,
-                    modifier = Modifier.padding(start = 4.dp)
-                )
-            }
-        }
-    }
-}
-
 @Preview(showBackground = true)
 @Composable
 fun NutritionalAnalysisScreenPreview() {
-    NutritionalAnalysisScreen(navController = NavController(LocalContext.current))
+    // Note: Preview won't work with the new parameters, you'll need to test on device
 }
