@@ -12,6 +12,7 @@ import com.mohit.healthy_aahar.model.IngredientRecipeRequest
 import com.mohit.healthy_aahar.model.LogMealRequest
 import com.mohit.healthy_aahar.model.Meal
 import com.mohit.healthy_aahar.model.MealPlanResponse
+import com.mohit.healthy_aahar.model.RecipeDetails
 import com.mohit.healthy_aahar.model.SwapMealRequest
 import com.mohit.healthy_aahar.model.User
 import com.mohit.healthy_aahar.model.UserDetails
@@ -49,6 +50,12 @@ class MainViewModel : ViewModel() {
 
     private val _customMeal = MutableLiveData<CustomMeal?>()
     val customMeal: LiveData<CustomMeal?> get() = _customMeal
+
+    private val _recipeDetails = MutableLiveData<RecipeDetails?>()
+    val recipeDetails: LiveData<RecipeDetails?> = _recipeDetails
+
+    private val _isLoadingRecipe = MutableLiveData<Boolean>()
+    val isLoadingRecipe: LiveData<Boolean> = _isLoadingRecipe
 
     fun registerUser(user: User) {
         viewModelScope.launch {
@@ -235,6 +242,31 @@ class MainViewModel : ViewModel() {
                 Log.e("API", "Exception: ${e.message}")
             }
         }
+    }
+
+    fun getRecipeDetails(recipeId: String) {
+        viewModelScope.launch {
+            try {
+                _isLoadingRecipe.value = true
+                _error.value = null
+
+                val response = apiService.getRecipeDetails(recipeId)
+                if (response.isSuccessful) {
+                    _recipeDetails.value = response.body()
+                } else {
+                    _error.value = "Failed to load recipe details: ${response.message()}"
+                }
+            } catch (e: Exception) {
+                _error.value = "Error loading recipe: ${e.message}"
+            } finally {
+                _isLoadingRecipe.value = false
+            }
+        }
+    }
+
+    // Clear recipe details when navigating away
+    fun clearRecipeDetails() {
+        _recipeDetails.value = null
     }
 
     fun clearMessages() {
