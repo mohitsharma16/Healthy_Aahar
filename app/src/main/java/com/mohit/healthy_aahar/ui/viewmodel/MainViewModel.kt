@@ -8,14 +8,20 @@ import androidx.lifecycle.viewModelScope
 import com.mohit.healthy_aahar.model.CustomMeal
 import com.mohit.healthy_aahar.model.CustomMealRequest
 import com.mohit.healthy_aahar.model.DailyNutrition
+import com.mohit.healthy_aahar.model.FeedbackRequest
 import com.mohit.healthy_aahar.model.IngredientRecipeRequest
 import com.mohit.healthy_aahar.model.LogMealRequest
+import com.mohit.healthy_aahar.model.LoggedMeal
 import com.mohit.healthy_aahar.model.Meal
 import com.mohit.healthy_aahar.model.MealPlanResponse
+import com.mohit.healthy_aahar.model.NutritionReport
 import com.mohit.healthy_aahar.model.RecipeDetails
+import com.mohit.healthy_aahar.model.RecipeSearchResponse
+import com.mohit.healthy_aahar.model.RecipeWithFeedback
 import com.mohit.healthy_aahar.model.SwapMealRequest
 import com.mohit.healthy_aahar.model.User
 import com.mohit.healthy_aahar.model.UserDetails
+import com.mohit.healthy_aahar.model.WeeklyReport
 import com.mohit.healthy_aahar.network.RetrofitClient
 import com.mohit.healthy_aahar.network.RetrofitClient.apiService
 import kotlinx.coroutines.launch
@@ -56,6 +62,24 @@ class MainViewModel : ViewModel() {
 
     private val _isLoadingRecipe = MutableLiveData<Boolean>()
     val isLoadingRecipe: LiveData<Boolean> = _isLoadingRecipe
+
+    private val _weeklyReport = MutableLiveData<WeeklyReport?>()
+    val weeklyReport: LiveData<WeeklyReport?> get() = _weeklyReport
+
+    private val _nutritionReport = MutableLiveData<NutritionReport?>()
+    val nutritionReport: LiveData<NutritionReport?> get() = _nutritionReport
+
+    private val _mealHistory = MutableLiveData<List<LoggedMeal>?>()
+    val mealHistory: LiveData<List<LoggedMeal>?> get() = _mealHistory
+
+    private val _recipeWithFeedback = MutableLiveData<RecipeWithFeedback?>()
+    val recipeWithFeedback: LiveData<RecipeWithFeedback?> get() = _recipeWithFeedback
+
+    private val _cuisineRecipes = MutableLiveData<List<RecipeDetails>?>()
+    val cuisineRecipes: LiveData<List<RecipeDetails>?> get() = _cuisineRecipes
+
+    private val _searchResults = MutableLiveData<RecipeSearchResponse?>()
+    val searchResults: LiveData<RecipeSearchResponse?> get() = _searchResults
 
     fun registerUser(user: User) {
         viewModelScope.launch {
@@ -264,6 +288,172 @@ class MainViewModel : ViewModel() {
                 _error.value = "Error loading recipe: ${e.message}"
             } finally {
                 _isLoadingRecipe.value = false
+            }
+        }
+    }
+    fun fetchWeeklyReport(uid: String) {
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
+                Log.d("API", "Fetching weekly report for $uid")
+
+                val response = api.getWeeklyReport(uid)
+                if (response.isSuccessful) {
+                    _weeklyReport.value = response.body()
+                    Log.d("API", "Weekly report received: ${response.body()}")
+                } else {
+                    val errorText = response.errorBody()?.string()
+                    _error.value = "Weekly report error: $errorText"
+                    Log.e("API", "Error: $errorText")
+                }
+            } catch (e: Exception) {
+                _error.value = e.message
+                Log.e("API", "Exception: ${e.message}")
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun fetchNutritionReport(uid: String, startDate: String, endDate: String) {
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
+                Log.d("API", "Fetching nutrition report for $uid from $startDate to $endDate")
+
+                val response = api.getNutritionReport(uid, startDate, endDate)
+                if (response.isSuccessful) {
+                    _nutritionReport.value = response.body()
+                    Log.d("API", "Nutrition report received: ${response.body()}")
+                } else {
+                    val errorText = response.errorBody()?.string()
+                    _error.value = "Nutrition report error: $errorText"
+                    Log.e("API", "Error: $errorText")
+                }
+            } catch (e: Exception) {
+                _error.value = e.message
+                Log.e("API", "Exception: ${e.message}")
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun fetchMealHistory(uid: String, date: String? = null) {
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
+                Log.d("API", "Fetching meal history for $uid" + if (date != null) " on $date" else "")
+
+                val response = api.getMealHistory(uid, date)
+                if (response.isSuccessful) {
+                    _mealHistory.value = response.body()
+                    Log.d("API", "Meal history received: ${response.body()}")
+                } else {
+                    val errorText = response.errorBody()?.string()
+                    _error.value = "Meal history error: $errorText"
+                    Log.e("API", "Error: $errorText")
+                }
+            } catch (e: Exception) {
+                _error.value = e.message
+                Log.e("API", "Exception: ${e.message}")
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun fetchRecipeWithFeedback(recipeId: String) {
+        viewModelScope.launch {
+            try {
+                _isLoadingRecipe.value = true
+                _error.value = null
+                Log.d("API", "Fetching recipe with feedback for $recipeId")
+
+                val response = api.getRecipeWithFeedback(recipeId)
+                if (response.isSuccessful) {
+                    _recipeWithFeedback.value = response.body()
+                    Log.d("API", "Recipe with feedback received: ${response.body()}")
+                } else {
+                    _error.value = "Failed to load recipe with feedback: ${response.message()}"
+                    Log.e("API", "Error: ${response.errorBody()?.string()}")
+                }
+            } catch (e: Exception) {
+                _error.value = "Error loading recipe with feedback: ${e.message}"
+                Log.e("API", "Exception: ${e.message}")
+            } finally {
+                _isLoadingRecipe.value = false
+            }
+        }
+    }
+
+    fun fetchRecipesByCuisine(cuisine: String, limit: Int = 10) {
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
+                Log.d("API", "Fetching recipes for cuisine: $cuisine")
+
+                val response = api.getRecipesByCuisine(cuisine, limit)
+                if (response.isSuccessful) {
+                    _cuisineRecipes.value = response.body()
+                    Log.d("API", "Cuisine recipes received: ${response.body()}")
+                } else {
+                    val errorText = response.errorBody()?.string()
+                    _error.value = "Cuisine recipes error: $errorText"
+                    Log.e("API", "Error: $errorText")
+                }
+            } catch (e: Exception) {
+                _error.value = e.message
+                Log.e("API", "Exception: ${e.message}")
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun searchRecipes(query: String, limit: Int = 10) {
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
+                Log.d("API", "Searching recipes for: $query")
+
+                val response = api.searchRecipes(query, limit)
+                if (response.isSuccessful) {
+                    _searchResults.value = response.body()
+                    Log.d("API", "Search results received: ${response.body()}")
+                } else {
+                    val errorText = response.errorBody()?.string()
+                    _error.value = "Search error: $errorText"
+                    Log.e("API", "Error: $errorText")
+                }
+            } catch (e: Exception) {
+                _error.value = e.message
+                Log.e("API", "Exception: ${e.message}")
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun submitRecipeFeedback(uid: String, recipeId: String, rating: Int, comments: String) {
+        viewModelScope.launch {
+            try {
+                Log.d("API", "Submitting feedback for recipe $recipeId")
+
+                val feedback = FeedbackRequest(recipeId, rating, comments)
+                val response = api.submitFeedback(uid, feedback)
+
+                if (response.isSuccessful) {
+                    _registerResponse.value = "Feedback submitted successfully"
+                    Log.d("API", "Feedback submitted successfully")
+                } else {
+                    val errorText = response.errorBody()?.string()
+                    _error.value = "Feedback error: $errorText"
+                    Log.e("API", "Error: $errorText")
+                }
+            } catch (e: Exception) {
+                _error.value = e.message
+                Log.e("API", "Exception: ${e.message}")
             }
         }
     }
