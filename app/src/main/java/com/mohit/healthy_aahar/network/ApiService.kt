@@ -40,10 +40,21 @@ interface ApiService {
     suspend fun logCustomMeal(@Body request: CustomMealRequest): Response<CustomMeal>
 
     @GET("get_meal_history")
-    suspend fun getMealHistory(): Response<List<LoggedMeal>>
+    suspend fun getMealHistory(
+        @Query("uid") uid: String,
+        @Query("date") date: String? = null
+    ): Response<List<LoggedMeal>>
 
     @GET("weekly_report/{uid}")
     suspend fun getWeeklyReport(@Path("uid") uid: String): Response<WeeklyReport>
+
+    // NEW: Custom date range nutrition report
+    @GET("nutrition_report/{uid}")
+    suspend fun getNutritionReport(
+        @Path("uid") uid: String,
+        @Query("start_date") startDate: String,
+        @Query("end_date") endDate: String
+    ): Response<NutritionReport>
 
     @POST("recipe_feedback/{uid}")
     suspend fun submitFeedback(
