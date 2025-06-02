@@ -12,12 +12,18 @@ import com.mohit.healthy_aahar.repository.AuthRepository
 import com.mohit.healthy_aahar.ui.screens.auth.*
 import com.mohit.healthy_aahar.ui.screens.main.*
 import com.mohit.healthy_aahar.ui.screens.profile.*
+import com.mohit.healthy_aahar.ui.viewmodel.MainViewModel
 
 @Composable
-fun AppNavGraph(navController: NavHostController, authRepository: AuthRepository, onMenuClick: () -> Unit) {
+fun AppNavGraph(
+    navController: NavHostController,
+    authRepository: AuthRepository,
+    viewModel: MainViewModel,
+    onMenuClick: () -> Unit
+) {
     NavHost(navController = navController,
         startDestination = Screen.Onboarding.route,
-        ) {
+    ) {
 
         // **Onboarding & Authentication Flow**
         composable(Screen.Onboarding.route) {
@@ -78,7 +84,6 @@ fun AppNavGraph(navController: NavHostController, authRepository: AuthRepository
             )
         }
 
-
         // **Profile & Settings**
         composable(Screen.Profile.route) {
             ProfileScreen( navController ,onSignOut = {
@@ -93,7 +98,13 @@ fun AppNavGraph(navController: NavHostController, authRepository: AuthRepository
         }
 
         composable(Screen.Feedback.route){
-            FeedbackScreen(navController)
+            val currentUser = authRepository.getCurrentUser()
+            val uid = currentUser?.uid ?: ""
+            FeedbackScreen(
+                navController = navController,
+                viewModel = viewModel,
+                uid = uid
+            )
         }
         composable(Screen.Settings.route) {
             SettingsScreen(navController)
