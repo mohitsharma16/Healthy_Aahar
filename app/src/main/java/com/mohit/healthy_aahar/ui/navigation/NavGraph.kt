@@ -68,7 +68,10 @@ fun AppNavGraph(
             MealHistoryScreen(navController)
         }
         composable(Screen.StatisticsScreen.route) {
-            StatisticsScreen(navController, onMenuClick)
+            val currentUser = authRepository.getCurrentUser()
+            val uid = currentUser?.uid ?: ""
+            StatisticsScreen(navController, onMenuClick,viewModel = viewModel,
+                uid = uid)
         }
         composable(Screen.FoodLogging.route){
             FoodLoggingScreen(navController)
