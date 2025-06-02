@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
@@ -22,23 +23,70 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.mohit.healthy_aahar.R
 import com.mohit.healthy_aahar.ui.theme.Primary600
+import com.mohit.healthy_aahar.ui.viewmodel.MainViewModel
+import com.mohit.healthy_aahar.model.DailyNutrition
+import com.mohit.healthy_aahar.model.WeeklyReport
+import com.mohit.healthy_aahar.model.NutritionReport
 import kotlin.math.*
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StatisticsScreen(navController: NavController,onMenuClick: () -> Unit) {
-    var selectedPeriod by remember { mutableStateOf("Weekly") }
+fun StatisticsScreen(
+    navController: NavController,
+    onMenuClick: () -> Unit,
+    uid: String, // Pass the user ID
+    viewModel: MainViewModel = viewModel()
+) {
+    var selectedPeriod by remember { mutableStateOf("Daily") }
     var isDropdownExpanded by remember { mutableStateOf(false) }
     val periods = listOf("Daily", "Weekly")
+
+    // Observe LiveData
+    val dailyNutrition by viewModel.dailyNutrition.observeAsState()
+    val weeklyReport by viewModel.weeklyReport.observeAsState()
+    val nutritionReport by viewModel.nutritionReport.observeAsState()
+    val userDetails by viewModel.userDetails.observeAsState()
+    val isLoading by viewModel.isLoading.observeAsState(false)
+    val error by viewModel.error.observeAsState()
+
+    // Get current date
+    val currentDate = remember { LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) }
+    val weekStart = remember {
+        LocalDate.now().minusDays(6).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+    }
+
+    // Default target calories - you can make this configurable later
+    val defaultTargetCalories = 2000.0
+
+    // Load data when screen loads or period changes
+    LaunchedEffect(uid, selectedPeriod) {
+        viewModel.fetchUserDetails(uid) { }
+
+        when (selectedPeriod) {
+            "Daily" -> {
+                viewModel.fetchDailyNutrition(uid, currentDate)
+            }
+            "Weekly" -> {
+                viewModel.fetchWeeklyReport(uid)
+                // Also fetch nutrition report for 7 days
+                viewModel.fetchNutritionReport(uid, weekStart, currentDate)
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -49,7 +97,7 @@ fun StatisticsScreen(navController: NavController,onMenuClick: () -> Unit) {
         TopAppBar(
             title = {
                 Text(
-                    text = "Dashboards",
+                    text = "Dashboard",
                     color = Color.White,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Medium
@@ -77,6 +125,34 @@ fun StatisticsScreen(navController: NavController,onMenuClick: () -> Unit) {
                 containerColor = Primary600
             )
         )
+
+        // Show loading indicator
+        if (isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = Primary600)
+            }
+        }
+
+        // Show error message
+        error?.let { errorMessage ->
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE))
+            ) {
+                Text(
+                    text = "Error: $errorMessage",
+                    color = Color.Red,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        }
 
         // Scrollable Content
         Column(
@@ -108,7 +184,7 @@ fun StatisticsScreen(navController: NavController,onMenuClick: () -> Unit) {
                 Spacer(modifier = Modifier.width(12.dp))
 
                 Text(
-                    text = "Hey, Mohit",
+                    text = "Hey, ${userDetails?.name ?: "User"}",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Medium,
                     color = Color.Black
@@ -169,17 +245,17 @@ fun StatisticsScreen(navController: NavController,onMenuClick: () -> Unit) {
 
             // Content based on selected period
             when (selectedPeriod) {
-                "Daily" -> DailyStatsUI()
-                "Weekly" -> WeeklyStatsUI()
+                "Daily" -> DailyStatsUI(dailyNutrition, defaultTargetCalories)
+                "Weekly" -> WeeklyStatsUI(weeklyReport, nutritionReport, defaultTargetCalories)
             }
         }
     }
 }
 
 @Composable
-fun DailyStatsUI() {
+fun DailyStatsUI(dailyNutrition: DailyNutrition?, targetCalories: Double) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        // Daily Measurements
+        // Daily Measurements - Using mock weight data for now
         WeightMeasurementsCard(
             title = "Daily Measurements",
             predicted = "77.8 Kg",
@@ -187,15 +263,15 @@ fun DailyStatsUI() {
             isDaily = true
         )
 
-        // Daily Tracker
-        DailyTrackerCard()
+        // Daily Tracker with real data
+        DailyTrackerCard(dailyNutrition, targetCalories)
     }
 }
 
 @Composable
-fun WeeklyStatsUI() {
+fun WeeklyStatsUI(weeklyReport: WeeklyReport?, nutritionReport: NutritionReport?, defaultTargetCalories: Double) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        // Weekly Measurements
+        // Weekly Measurements - Using mock weight data for now
         WeightMeasurementsCard(
             title = "Weekly Measurements",
             predicted = "77.8 Kg",
@@ -203,8 +279,8 @@ fun WeeklyStatsUI() {
             isDaily = false
         )
 
-        // Weekly Tracker
-        WeeklyTrackerCard()
+        // Weekly Tracker with real data
+        WeeklyTrackerCard(weeklyReport, nutritionReport, defaultTargetCalories)
     }
 }
 
@@ -297,10 +373,10 @@ fun WeightMeasurementsCard(
 @Composable
 fun WeightLineChart(isDaily: Boolean) {
     val data = if (isDaily) {
-        // Daily data for 24 hours
+        // Daily data for 24 hours - mock data
         listOf(77.8f, 77.9f, 77.7f, 77.8f, 77.9f, 78.0f, 77.8f, 77.7f, 77.8f, 77.9f, 78.0f, 77.8f)
     } else {
-        // Weekly data for 7 days
+        // Weekly data for 7 days - mock data
         listOf(78.2f, 78.0f, 77.8f, 77.9f, 77.7f, 77.8f, 77.8f)
     }
 
@@ -357,7 +433,21 @@ fun WeightLineChart(isDaily: Boolean) {
 }
 
 @Composable
-fun DailyTrackerCard() {
+fun DailyTrackerCard(dailyNutrition: DailyNutrition?, targetCalories: Double) {
+    val actualCalories = dailyNutrition?.total?.calories ?: 0
+    val actualProtein = dailyNutrition?.total?.protein ?: 0
+    val actualCarbs = dailyNutrition?.total?.carbs ?: 0
+    val actualFat = dailyNutrition?.total?.fat ?: 0
+
+    // Calculate progress percentage
+    val calorieProgress = if (targetCalories > 0) (actualCalories / targetCalories).toFloat().coerceIn(0f, 1f) else 0f
+    val progressPercentage = (calorieProgress * 100).toInt()
+
+    // Calculate target macros based on standard ratios
+    val targetProtein = (targetCalories * 0.2 / 4).toInt() // 20% of calories from protein (4 cal/g)
+    val targetCarbs = (targetCalories * 0.5 / 4).toInt() // 50% of calories from carbs (4 cal/g)
+    val targetFat = (targetCalories * 0.3 / 9).toInt() // 30% of calories from fat (9 cal/g)
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F8E9)),
@@ -385,7 +475,7 @@ fun DailyTrackerCard() {
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator(
-                        progress = 0.6f, // 60% for daily
+                        progress = calorieProgress,
                         modifier = Modifier.size(120.dp),
                         strokeWidth = 8.dp,
                         color = Color(0xFF8BC34A),
@@ -411,7 +501,7 @@ fun DailyTrackerCard() {
                             )
                         }
                         Text(
-                            text = "60%",
+                            text = "$progressPercentage%",
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.Black
@@ -423,24 +513,24 @@ fun DailyTrackerCard() {
 
                 Column {
                     Text(
-                        text = "Predicted",
+                        text = "Target",
                         fontSize = 12.sp,
                         color = Color.Gray
                     )
                     Text(
-                        text = "1,284",
+                        text = "${targetCalories.toInt()}",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.Black
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Actual",
+                        text = "Consumed",
                         fontSize = 12.sp,
                         color = Color.Gray
                     )
                     Text(
-                        text = "890",
+                        text = "$actualCalories",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.Black
@@ -457,19 +547,25 @@ fun DailyTrackerCard() {
             ) {
                 NutritionCard(
                     title = "Calorie",
-                    value = "451/2050",
+                    value = "$actualCalories/${targetCalories.toInt()}",
                     unit = "kcal",
                     modifier = Modifier.weight(1f)
                 )
                 NutritionCard(
                     title = "Protein",
-                    value = "281/356",
+                    value = "$actualProtein/$targetProtein",
                     unit = "gm",
                     modifier = Modifier.weight(1f)
                 )
                 NutritionCard(
                     title = "Carbs",
-                    value = "45/500",
+                    value = "$actualCarbs/$targetCarbs",
+                    unit = "gm",
+                    modifier = Modifier.weight(1f)
+                )
+                NutritionCard(
+                    title = "Fat",
+                    value = "$actualFat/$targetFat",
                     unit = "gm",
                     modifier = Modifier.weight(1f)
                 )
@@ -479,7 +575,23 @@ fun DailyTrackerCard() {
 }
 
 @Composable
-fun WeeklyTrackerCard() {
+fun WeeklyTrackerCard(weeklyReport: WeeklyReport?, nutritionReport: NutritionReport?, defaultTargetCalories: Double) {
+    val totalCalories = weeklyReport?.weekly_totals?.calories ?: 0
+    val targetCalories = weeklyReport?.goal_analysis?.target_daily_calories ?: defaultTargetCalories
+    val weeklyTarget = (targetCalories * 7).toInt()
+    val actualProtein = weeklyReport?.weekly_totals?.protein ?: 0
+    val actualCarbs = weeklyReport?.weekly_totals?.carbs ?: 0
+    val actualFat = weeklyReport?.weekly_totals?.fat ?: 0
+
+    // Calculate progress percentage
+    val calorieProgress = if (weeklyTarget > 0) (totalCalories / weeklyTarget.toFloat()).coerceIn(0f, 1f) else 0f
+    val progressPercentage = (calorieProgress * 100).toInt()
+
+    // Calculate weekly target macros
+    val weeklyTargetProtein = ((targetCalories * 0.2 / 4) * 7).toInt()
+    val weeklyTargetCarbs = ((targetCalories * 0.5 / 4) * 7).toInt()
+    val weeklyTargetFat = ((targetCalories * 0.3 / 9) * 7).toInt()
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F8E9)),
@@ -507,7 +619,7 @@ fun WeeklyTrackerCard() {
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator(
-                        progress = 0.8f, // 80% for weekly as shown in UI
+                        progress = calorieProgress,
                         modifier = Modifier.size(120.dp),
                         strokeWidth = 8.dp,
                         color = Color(0xFF8BC34A),
@@ -533,7 +645,7 @@ fun WeeklyTrackerCard() {
                             )
                         }
                         Text(
-                            text = "80%",
+                            text = "$progressPercentage%",
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.Black
@@ -545,24 +657,24 @@ fun WeeklyTrackerCard() {
 
                 Column {
                     Text(
-                        text = "Predicted",
+                        text = "Weekly Target",
                         fontSize = 12.sp,
                         color = Color.Gray
                     )
                     Text(
-                        text = "1,284",
+                        text = "$weeklyTarget",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.Black
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Actual",
+                        text = "Consumed",
                         fontSize = 12.sp,
                         color = Color.Gray
                     )
                     Text(
-                        text = "890",
+                        text = "$totalCalories",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.Black
@@ -572,6 +684,28 @@ fun WeeklyTrackerCard() {
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Show weekly insights if available
+            weeklyReport?.insights?.let { insights ->
+                if (insights.isNotEmpty()) {
+                    Text(
+                        text = "Weekly Insights:",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.Black
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    insights.take(2).forEach { insight ->
+                        Text(
+                            text = "• $insight",
+                            fontSize = 12.sp,
+                            color = Color.Gray,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+
             // Nutrition cards row
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -579,19 +713,25 @@ fun WeeklyTrackerCard() {
             ) {
                 NutritionCard(
                     title = "Calorie",
-                    value = "451/2050",
+                    value = "$totalCalories/$weeklyTarget",
                     unit = "kcal",
                     modifier = Modifier.weight(1f)
                 )
                 NutritionCard(
                     title = "Protein",
-                    value = "281/356",
+                    value = "$actualProtein/$weeklyTargetProtein",
                     unit = "gm",
                     modifier = Modifier.weight(1f)
                 )
                 NutritionCard(
                     title = "Carbs",
-                    value = "45/500",
+                    value = "$actualCarbs/$weeklyTargetCarbs",
+                    unit = "gm",
+                    modifier = Modifier.weight(1f)
+                )
+                NutritionCard(
+                    title = "Fat",
+                    value = "$actualFat/$weeklyTargetFat",
                     unit = "gm",
                     modifier = Modifier.weight(1f)
                 )
@@ -651,12 +791,14 @@ fun NutritionCard(
     }
 }
 
-
-
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun StatisticsScreenPreview() {
     MaterialTheme {
-        StatisticsScreen(navController = rememberNavController(), onMenuClick = {})
+        StatisticsScreen(
+            navController = rememberNavController(),
+            onMenuClick = {},
+            uid = "test_uid"
+        )
     }
 }
