@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,12 +20,16 @@ import com.mohit.healthy_aahar.ui.components.BottomNavBar
 import com.mohit.healthy_aahar.ui.components.RightSideDrawer
 import com.mohit.healthy_aahar.ui.navigation.AppNavGraph
 import com.mohit.healthy_aahar.ui.navigation.Screen
+import com.mohit.healthy_aahar.ui.viewmodel.MainViewModel
 import com.mohit.healthy_aahar.datastore.UserPreference
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val authRepository = AuthRepository()
+
+    // Inject or create the MainViewModel
+    private val mainViewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,7 +50,6 @@ class MainActivity : ComponentActivity() {
                     try {
                         // Sign out from Firebase Auth
                         authRepository.logout()
-
 
                         // Clear user data from DataStore
                         UserPreference.clearUserData(context)
@@ -79,6 +83,7 @@ class MainActivity : ComponentActivity() {
                         AppNavGraph(
                             navController = navController,
                             authRepository = authRepository,
+                            viewModel = mainViewModel, // Pass the viewModel here
                             onMenuClick = { isDrawerOpen = true }
                         )
                     }
