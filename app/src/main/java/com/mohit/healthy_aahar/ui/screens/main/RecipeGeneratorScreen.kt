@@ -11,6 +11,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -35,6 +37,9 @@ import com.mohit.healthy_aahar.ui.navigation.Screen
 import com.mohit.healthy_aahar.ui.theme.Primary600
 import com.mohit.healthy_aahar.ui.theme.Primary700
 import com.mohit.healthy_aahar.ui.viewmodel.MainViewModel
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.ui.text.style.TextAlign
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,7 +50,9 @@ fun RecipeGeneratorScreen(navController: NavController, onMenuClick: () -> Unit)
     val uid by uidFlow.collectAsState(initial = null)
 
     var selectedItems by remember { mutableStateOf(setOf<String>()) }
+    var customIngredients by remember { mutableStateOf(listOf<String>()) }
     var searchText by remember { mutableStateOf("") }
+    var ingredientInput by remember { mutableStateOf("") }
     val recipe by viewModel.generatedRecipe.observeAsState()
     val error by viewModel.error.observeAsState()
     val isLoading = remember { mutableStateOf(false) }
@@ -67,6 +74,26 @@ fun RecipeGeneratorScreen(navController: NavController, onMenuClick: () -> Unit)
     } else {
         foodItems.filter { it.name.contains(searchText, ignoreCase = true) }
     }
+
+    // Function to add custom ingredient
+    fun addCustomIngredient() {
+        if (ingredientInput.isNotBlank()) {
+            val ingredient = ingredientInput.trim()
+            if (!customIngredients.contains(ingredient,) &&
+                !selectedItems.contains(ingredient)) {
+                customIngredients = customIngredients + ingredient
+                ingredientInput = ""
+            }
+        }
+    }
+
+    // Function to remove custom ingredient
+    fun removeCustomIngredient(ingredient: String) {
+        customIngredients = customIngredients - ingredient
+    }
+
+    // Get all selected ingredients (visual + custom)
+    val allSelectedIngredients = selectedItems + customIngredients
 
     Column(
         modifier = Modifier
@@ -116,11 +143,11 @@ fun RecipeGeneratorScreen(navController: NavController, onMenuClick: () -> Unit)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
-            // Search Bar
+            // Search Bar for visual ingredients
             OutlinedTextField(
                 value = searchText,
                 onValueChange = { searchText = it },
-                placeholder = { Text("Search Ingredients") },
+                placeholder = { Text("Search Visual Ingredients") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -135,10 +162,85 @@ fun RecipeGeneratorScreen(navController: NavController, onMenuClick: () -> Unit)
                 singleLine = true
             )
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Custom Ingredient Input
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FFF8))
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "Add Custom Ingredients",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF2E7D32)
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = ingredientInput,
+                            onValueChange = { ingredientInput = it },
+                            placeholder = { Text("Type ingredient name...") },
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(8.dp)),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                unfocusedContainerColor = Color.White,
+                                focusedContainerColor = Color.White,
+                                unfocusedBorderColor = Color.LightGray,
+                                focusedBorderColor = Color(0xFF8BC34A)
+                            ),
+                            singleLine = true
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Button(
+                            onClick = { addCustomIngredient() },
+                            modifier = Modifier.height(56.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32)),
+                            enabled = ingredientInput.isNotBlank()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Add",
+                                tint = Color.White
+                            )
+                        }
+                    }
+
+                    // Display custom ingredients as chips
+                    if (customIngredients.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(customIngredients) { ingredient ->
+                                CustomIngredientChip(
+                                    ingredient = ingredient,
+                                    onRemove = { removeCustomIngredient(ingredient) }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                "Pick your ingredients",
+                "Pick from visual ingredients",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium,
                 color = Color(0xFF2E7D32)
@@ -178,10 +280,39 @@ fun RecipeGeneratorScreen(navController: NavController, onMenuClick: () -> Unit)
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // Selected Ingredients Summary
+            if (allSelectedIngredients.isNotEmpty()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E8))
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Selected Ingredients (${allSelectedIngredients.size})",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF2E7D32)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = allSelectedIngredients.joinToString(", "),
+                            fontSize = 14.sp,
+                            color = Color(0xFF424242),
+                            lineHeight = 20.sp
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
             // Generate Button
             Button(
                 onClick = {
-                    val ingredients = selectedItems.map { it.lowercase() }
+                    val ingredients = allSelectedIngredients.map { it.lowercase() }
                     if (uid != null && ingredients.isNotEmpty()) {
                         isLoading.value = true
                         viewModel.generateRecipeByIngredients(uid!!, ingredients)
@@ -192,7 +323,7 @@ fun RecipeGeneratorScreen(navController: NavController, onMenuClick: () -> Unit)
                     .height(56.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32)),
-                enabled = selectedItems.isNotEmpty()
+                enabled = allSelectedIngredients.isNotEmpty()
             ) {
                 if (isLoading.value) {
                     Row(
@@ -214,7 +345,7 @@ fun RecipeGeneratorScreen(navController: NavController, onMenuClick: () -> Unit)
                     }
                 } else {
                     Text(
-                        text = "Generate Recipe",
+                        text = "Generate Recipe (${allSelectedIngredients.size} ingredients)",
                         fontSize = 16.sp,
                         color = Color.White,
                         fontWeight = FontWeight.Medium
@@ -252,6 +383,36 @@ fun RecipeGeneratorScreen(navController: NavController, onMenuClick: () -> Unit)
 
             // Bottom padding for better scrolling
             Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+@Composable
+fun CustomIngredientChip(ingredient: String, onRemove: () -> Unit) {
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF2E7D32)),
+        modifier = Modifier.height(32.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = ingredient,
+                color = Color.White,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = "Remove",
+                tint = Color.White,
+                modifier = Modifier
+                    .size(16.dp)
+                    .clickable { onRemove() }
+            )
         }
     }
 }
