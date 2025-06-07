@@ -1,5 +1,6 @@
 package com.mohit.healthy_aahar.ui.navigation
 
+import android.window.SplashScreen
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -21,9 +22,22 @@ fun AppNavGraph(
     viewModel: MainViewModel,
     onMenuClick: () -> Unit
 ) {
-    NavHost(navController = navController,
-        startDestination = Screen.Onboarding.route,
+    NavHost(
+        navController = navController,
+        startDestination = Screen.Splash.route,
     ) {
+
+        // **Splash Screen - Entry Point**
+        composable(Screen.Splash.route) {
+            SplashScreen(
+                onNavigate = { destination ->
+                    navController.navigate(destination) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                },
+                authRepository = authRepository
+            )
+        }
 
         // **Onboarding & Authentication Flow**
         composable(Screen.Onboarding.route) {
@@ -34,18 +48,19 @@ fun AppNavGraph(
                         popUpTo("onboarding") { inclusive = true }
                     }
                 } else {
-                    navController.navigate(Screen.Login.route) {
+                    // Navigate directly to Signup instead of Login
+                    navController.navigate(Screen.Signup.route) {
                         popUpTo("onboarding") { inclusive = true }
                     }
                 }
             })
         }
-        composable(Screen.Login.route) {
-            LoginScreen(navController)
-        }
+
+        // Removed Login screen composable - only keeping Signup
         composable(Screen.Signup.route) {
             SignupScreen(navController)
         }
+
         composable(Screen.UserSetup.route) {
             UserSetupScreen {
                 navController.navigate(Screen.Home.route) {
@@ -90,7 +105,8 @@ fun AppNavGraph(
         // **Profile & Settings**
         composable(Screen.Profile.route) {
             ProfileScreen( navController ,onSignOut = {
-                navController.navigate(Screen.Login.route) {
+                // Navigate to Signup instead of Login on sign out
+                navController.navigate(Screen.Signup.route) {
                     popUpTo(Screen.Profile.route) { inclusive = true } // 🔹 Clears profile screen from back stack
                 }
             })
