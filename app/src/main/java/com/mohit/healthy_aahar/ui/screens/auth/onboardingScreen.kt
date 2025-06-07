@@ -15,17 +15,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mohit.healthy_aahar.R
+import com.mohit.healthy_aahar.datastore.UserPreference
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun OnboardingScreen(onComplete: () -> Unit) {
     var pageIndex by remember { mutableStateOf(0) }
+
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     val lightGreen = Color(0xFFE8F5E1) // Background color from images
     val textGreen = Color(0xFF61A744) // Text green color from images
@@ -157,7 +163,13 @@ fun OnboardingScreen(onComplete: () -> Unit) {
                             if (pageIndex < pages.size - 1) {
                                 pageIndex++
                             } else {
-                                onComplete()
+                                // User has completed onboarding
+                                scope.launch {
+                                    // Mark onboarding as completed
+                                    UserPreference.setOnboardingCompleted(context)
+                                    // Then proceed with existing logic
+                                    onComplete()
+                                }
                             }
                         },
                     contentAlignment = Alignment.Center
