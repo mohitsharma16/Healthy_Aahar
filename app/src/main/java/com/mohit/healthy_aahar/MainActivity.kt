@@ -57,7 +57,7 @@ class MainActivity : ComponentActivity() {
                         Toast.makeText(context, "Logged out successfully!", Toast.LENGTH_SHORT).show()
 
                         // Navigate to login screen and clear the entire backstack
-                        navController.navigate("login_screen") {
+                        navController.navigate("signup_screen") {
                             popUpTo(0) { inclusive = true }
                         }
                     } catch (e: Exception) {
