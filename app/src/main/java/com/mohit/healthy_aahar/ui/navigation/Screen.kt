@@ -2,6 +2,7 @@ package com.mohit.healthy_aahar.ui.navigation
 
 sealed class Screen(val route: String) {
     // **Onboarding & Authentication Screens**
+    object Splash: Screen("splash_screen")
     object Onboarding : Screen("onboarding_screen")
     object Login : Screen("login_screen")
     object Signup : Screen("signup_screen")
