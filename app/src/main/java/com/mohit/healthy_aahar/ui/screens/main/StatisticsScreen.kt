@@ -1,5 +1,6 @@
 package com.mohit.healthy_aahar.ui.screens.main
 
+import android.widget.Toast
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -54,6 +55,7 @@ fun StatisticsScreen(
     var selectedPeriod by remember { mutableStateOf("Daily") }
     var isDropdownExpanded by remember { mutableStateOf(false) }
     val periods = listOf("Daily", "Weekly")
+    val context = LocalContext.current
 
     // Observe LiveData
     val dailyNutrition by viewModel.dailyNutrition.observeAsState()
@@ -69,8 +71,21 @@ fun StatisticsScreen(
         LocalDate.now().minusDays(6).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
     }
 
-    // Default target calories - you can make this configurable later
-    val defaultTargetCalories = 2000.0
+    // Default target calories - Handle nullable bmr properly
+    val defaultTargetCalories = userDetails?.bmr ?: 2000.0
+
+    // Show toast for errors instead of displaying on screen
+    LaunchedEffect(error) {
+        error?.let { errorMessage ->
+            if (errorMessage.contains("No nutrition log found", ignoreCase = true) ||
+                errorMessage.contains("no records found", ignoreCase = true) ||
+                errorMessage.contains("not found", ignoreCase = true)) {
+                Toast.makeText(context, "No records found for the selected period", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(context, "Error: $errorMessage", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
 
     // Load data when screen loads or period changes
     LaunchedEffect(uid, selectedPeriod) {
@@ -135,22 +150,6 @@ fun StatisticsScreen(
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(color = Primary600)
-            }
-        }
-
-        // Show error message
-        error?.let { errorMessage ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE))
-            ) {
-                Text(
-                    text = "Error: $errorMessage",
-                    color = Color.Red,
-                    modifier = Modifier.padding(16.dp)
-                )
             }
         }
 
@@ -253,7 +252,7 @@ fun StatisticsScreen(
 }
 
 @Composable
-fun DailyStatsUI(dailyNutrition: DailyNutrition?, targetCalories: Double) {
+fun DailyStatsUI(dailyNutrition: DailyNutrition?, defaultTargetCalories: Double) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         // Daily Measurements - Using mock weight data for now
         WeightMeasurementsCard(
@@ -264,7 +263,7 @@ fun DailyStatsUI(dailyNutrition: DailyNutrition?, targetCalories: Double) {
         )
 
         // Daily Tracker with real data
-        DailyTrackerCard(dailyNutrition, targetCalories)
+        DailyTrackerCard(dailyNutrition, defaultTargetCalories)
     }
 }
 
@@ -383,16 +382,17 @@ fun WeightLineChart(isDaily: Boolean) {
     Canvas(
         modifier = Modifier.fillMaxSize()
     ) {
+        // Fix: Ensure all calculations use consistent Float types
         val maxY = data.maxOrNull() ?: 78.5f
         val minY = data.minOrNull() ?: 77.5f
         val range = maxY - minY
         val adjustedRange = if (range < 0.5f) 0.5f else range
 
-        val spacing = size.width / (data.size - 1)
+        val spacing = size.width / (data.size - 1).toFloat() // Fix: Convert to Float
         val points = data.mapIndexed { index, value ->
             val normalizedValue = (value - minY) / adjustedRange
             Offset(
-                x = index * spacing,
+                x = index.toFloat() * spacing, // Fix: Convert index to Float
                 y = size.height - (normalizedValue * size.height * 0.8f) - (size.height * 0.1f)
             )
         }
@@ -403,11 +403,11 @@ fun WeightLineChart(isDaily: Boolean) {
                 moveTo(points.first().x, points.first().y)
                 for (i in 1 until points.size) {
                     val cp1 = Offset(
-                        (points[i - 1].x + points[i].x) / 2,
+                        (points[i - 1].x + points[i].x) / 2f, // Fix: Use 2f instead of 2
                         points[i - 1].y
                     )
                     val cp2 = Offset(
-                        (points[i - 1].x + points[i].x) / 2,
+                        (points[i - 1].x + points[i].x) / 2f, // Fix: Use 2f instead of 2
                         points[i].y
                     )
                     cubicTo(cp1.x, cp1.y, cp2.x, cp2.y, points[i].x, points[i].y)
@@ -440,7 +440,9 @@ fun DailyTrackerCard(dailyNutrition: DailyNutrition?, targetCalories: Double) {
     val actualFat = dailyNutrition?.total?.fat ?: 0
 
     // Calculate progress percentage
-    val calorieProgress = if (targetCalories > 0) (actualCalories / targetCalories).toFloat().coerceIn(0f, 1f) else 0f
+    val calorieProgress = if (targetCalories > 0) {
+        (actualCalories / targetCalories).toFloat().coerceIn(0f, 1f)
+    } else 0f
     val progressPercentage = (calorieProgress * 100).toInt()
 
     // Calculate target macros based on standard ratios
@@ -584,7 +586,9 @@ fun WeeklyTrackerCard(weeklyReport: WeeklyReport?, nutritionReport: NutritionRep
     val actualFat = weeklyReport?.weekly_totals?.fat ?: 0
 
     // Calculate progress percentage
-    val calorieProgress = if (weeklyTarget > 0) (totalCalories / weeklyTarget.toFloat()).coerceIn(0f, 1f) else 0f
+    val calorieProgress = if (weeklyTarget > 0) {
+        (totalCalories / weeklyTarget.toFloat()).coerceIn(0f, 1f)
+    } else 0f
     val progressPercentage = (calorieProgress * 100).toInt()
 
     // Calculate weekly target macros
