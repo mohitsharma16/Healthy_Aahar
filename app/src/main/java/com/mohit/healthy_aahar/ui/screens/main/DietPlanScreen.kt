@@ -38,25 +38,34 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mohit.healthy_aahar.datastore.UserPreference
 import com.mohit.healthy_aahar.model.LogMealRequest
+import com.mohit.healthy_aahar.model.UserDetails
+import android.util.Log
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DietPlanScreen(navController: NavController, onMenuClick: () -> Unit) {
     val mainViewModel: MainViewModel = viewModel()
     val mealPlanState by mainViewModel.mealPlan.observeAsState()
+    val userDetailsState by mainViewModel.userDetails.observeAsState() // Add this state
     val context = LocalContext.current
     val uidFlow = remember { UserPreference.getUidFlow(context) }
     val uid by uidFlow.collectAsState(initial = null)
 
     // Trigger once on first composition
     LaunchedEffect(uid) {
-        uid?.let { mainViewModel.getMealPlan(it) }
+        uid?.let {
+            mainViewModel.getMealPlan(it)
+            mainViewModel.fetchUserDetails(it) { name ->
+                // Optional: Handle the callback if needed
+                Log.d("DietPlan", "Fetched user: $name")
+            }
+        }
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White) // White background
+            .background(Color.White)
     ) {
         // Top App Bar
         TopAppBar(
@@ -96,18 +105,12 @@ fun DietPlanScreen(navController: NavController, onMenuClick: () -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .background(Color.White) // White background for content area
+                .background(Color.White)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // User Details Card
-            UserDetailsCard()
-
-            // Concern Details Card
-            ConcernDetailsCard()
-
-            // Other Details Card
-            OtherDetailsCard()
+            // User Details Card with dynamic data
+            UserDetailsCard(userDetails = userDetailsState)
 
             // Recommended Meals Section
             if (mealPlanState?.meal_plan?.isNotEmpty() == true) {
@@ -122,14 +125,14 @@ fun DietPlanScreen(navController: NavController, onMenuClick: () -> Unit) {
 }
 
 @Composable
-fun UserDetailsCard() {
+fun UserDetailsCard(userDetails: UserDetails?) {
     Card(
         modifier = Modifier
             .fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F8F0)), // Light green background
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F8F0)),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFF8FBC8F)) // Green border
+        border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFF8FBC8F))
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -142,24 +145,34 @@ fun UserDetailsCard() {
                 modifier = Modifier.padding(bottom = 12.dp)
             )
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    UserDetailItem("Name:", "Mohit Sharma")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    UserDetailItem("Age:", "21 year")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    UserDetailItem("Weight:", "96Kgs")
-                }
+            if (userDetails == null) {
+                // Skeleton loading state
+                UserDetailsSkeletonLoader()
+            } else {
+                // Actual data
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        UserDetailItem("Name:", userDetails.name)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        UserDetailItem("Age:", "${userDetails.age} years")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        UserDetailItem("Weight:", "${userDetails.weight} kg")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        UserDetailItem("Goal:", userDetails.goal.replaceFirstChar { it.uppercase() })
+                    }
 
-                Column(modifier = Modifier.weight(1f)) {
-                    UserDetailItem("Gender:", "Male")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    UserDetailItem("BMI:", "21")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    UserDetailItem("Height:", "184cm")
+                    Column(modifier = Modifier.weight(1f)) {
+                        UserDetailItem("Gender:", userDetails.gender.replaceFirstChar { it.uppercase() })
+                        Spacer(modifier = Modifier.height(8.dp))
+                        UserDetailItem("Height:", "${userDetails.height} cm")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        UserDetailItem("Activity Level:", userDetails.activity_level.replaceFirstChar { it.uppercase() })
+                        Spacer(modifier = Modifier.height(8.dp))
+                        UserDetailItem("BMR:", "${userDetails.bmr?.toInt()} kcal")
+                    }
                 }
             }
         }
@@ -167,58 +180,51 @@ fun UserDetailsCard() {
 }
 
 @Composable
-fun ConcernDetailsCard() {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F8F0)), // Light green background
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFF8FBC8F)) // Green border
+fun UserDetailsSkeletonLoader() {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text(
-                "Concern details",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
+        Column(modifier = Modifier.weight(1f)) {
+            repeat(4) {
+                SkeletonDetailItem()
+                if (it < 3) Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
 
-            UserDetailItem("Concern:", "Weight Loss")
+        Column(modifier = Modifier.weight(1f)) {
+            repeat(4) {
+                SkeletonDetailItem()
+                if (it < 3) Spacer(modifier = Modifier.height(8.dp))
+            }
         }
     }
 }
 
 @Composable
-fun OtherDetailsCard() {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F8F0)), // Light green background
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFF8FBC8F)) // Green border
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text(
-                "Other Details",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-
-            UserDetailItem("Medical Condition:", "Diabetes")
-            Spacer(modifier = Modifier.height(8.dp))
-            UserDetailItem("Time period:", "1 Month")
-            Spacer(modifier = Modifier.height(8.dp))
-            UserDetailItem("Type of Diet:", "Keto")
-        }
+fun SkeletonDetailItem() {
+    Column {
+        // Skeleton for label
+        Box(
+            modifier = Modifier
+                .width(60.dp)
+                .height(14.dp)
+                .background(
+                    Color.Gray.copy(alpha = 0.3f),
+                    RoundedCornerShape(4.dp)
+                )
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        // Skeleton for value
+        Box(
+            modifier = Modifier
+                .width(80.dp)
+                .height(14.dp)
+                .background(
+                    Color.Gray.copy(alpha = 0.2f),
+                    RoundedCornerShape(4.dp)
+                )
+        )
     }
 }
 
@@ -250,9 +256,9 @@ fun RecommendedMealsSection(
         modifier = Modifier
             .fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F8F0)), // Light green background
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F8F0)),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFF8FBC8F)) // Green border
+        border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFF8FBC8F))
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -280,7 +286,6 @@ fun MealCard(meal: Meal, viewModel: MainViewModel, uid: String?) {
     val today = remember { java.time.LocalDate.now().toString() }
     var selectedMealType by remember { mutableStateOf("Breakfast") }
     var showDropdown by remember { mutableStateOf(false) }
-//    var isMealLogged by remember { mutableStateOf(false) }
     var isLogging by remember { mutableStateOf(false) }
 
     val mealTypes = listOf("Breakfast", "Lunch", "Dinner", "Snack")
@@ -442,7 +447,6 @@ fun MealCard(meal: Meal, viewModel: MainViewModel, uid: String?) {
                     )
                 }
             }
-
         }
     }
 }
