@@ -5,6 +5,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -54,8 +55,14 @@ fun StatisticsScreen(
 ) {
     var selectedPeriod by remember { mutableStateOf("Daily") }
     var isDropdownExpanded by remember { mutableStateOf(false) }
-    val periods = listOf("Daily", "Weekly")
+    val periods = listOf("Daily", "Weekly", "Custom Range")
     val context = LocalContext.current
+
+    // Date picker states for custom range
+    var startDate by remember { mutableStateOf(LocalDate.now().minusDays(6)) }
+    var endDate by remember { mutableStateOf(LocalDate.now()) }
+    var showStartDatePicker by remember { mutableStateOf(false) }
+    var showEndDatePicker by remember { mutableStateOf(false) }
 
     // Observe LiveData
     val dailyNutrition by viewModel.dailyNutrition.observeAsState()
@@ -88,7 +95,7 @@ fun StatisticsScreen(
     }
 
     // Load data when screen loads or period changes
-    LaunchedEffect(uid, selectedPeriod) {
+    LaunchedEffect(uid, selectedPeriod, startDate, endDate) {
         viewModel.fetchUserDetails(uid) { }
 
         when (selectedPeriod) {
@@ -100,7 +107,41 @@ fun StatisticsScreen(
                 // Also fetch nutrition report for 7 days
                 viewModel.fetchNutritionReport(uid, weekStart, currentDate)
             }
+            "Custom Range" -> {
+                val startDateStr = startDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                val endDateStr = endDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                viewModel.fetchNutritionReport(uid, startDateStr, endDateStr)
+            }
         }
+    }
+
+    // Date picker dialogs
+    if (showStartDatePicker) {
+        val datePickerDialog = android.app.DatePickerDialog(
+            context,
+            { _, year, month, dayOfMonth ->
+                startDate = LocalDate.of(year, month + 1, dayOfMonth)
+                showStartDatePicker = false
+            },
+            startDate.year,
+            startDate.monthValue - 1,
+            startDate.dayOfMonth
+        )
+        datePickerDialog.show()
+    }
+
+    if (showEndDatePicker) {
+        val datePickerDialog = android.app.DatePickerDialog(
+            context,
+            { _, year, month, dayOfMonth ->
+                endDate = LocalDate.of(year, month + 1, dayOfMonth)
+                showEndDatePicker = false
+            },
+            endDate.year,
+            endDate.monthValue - 1,
+            endDate.dayOfMonth
+        )
+        datePickerDialog.show()
     }
 
     Column(
@@ -242,10 +283,99 @@ fun StatisticsScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Date Range Selector for Custom Range
+            if (selectedPeriod == "Custom Range") {
+                DateRangeSelector(
+                    startDate = startDate,
+                    endDate = endDate,
+                    onStartDateClick = { showStartDatePicker = true },
+                    onEndDateClick = { showEndDatePicker = true }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
             // Content based on selected period
             when (selectedPeriod) {
                 "Daily" -> DailyStatsUI(dailyNutrition, defaultTargetCalories)
                 "Weekly" -> WeeklyStatsUI(weeklyReport, nutritionReport, defaultTargetCalories)
+                "Custom Range" -> CustomRangeStatsUI(nutritionReport, defaultTargetCalories)
+            }
+        }
+    }
+}
+
+@Composable
+fun DateRangeSelector(
+    startDate: LocalDate,
+    endDate: LocalDate,
+    onStartDateClick: () -> Unit,
+    onEndDateClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F8E9)),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                text = "Select Date Range",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Start Date
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Start Date",
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onStartDateClick() },
+                        colors = CardDefaults.cardColors(containerColor = Color.White)
+                    ) {
+                        Text(
+                            text = startDate.format(DateTimeFormatter.ofPattern("dd MMM yyyy")),
+                            modifier = Modifier.padding(12.dp),
+                            fontSize = 14.sp,
+                            color = Color.Black
+                        )
+                    }
+                }
+
+                // End Date
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "End Date",
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onEndDateClick() },
+                        colors = CardDefaults.cardColors(containerColor = Color.White)
+                    ) {
+                        Text(
+                            text = endDate.format(DateTimeFormatter.ofPattern("dd MMM yyyy")),
+                            modifier = Modifier.padding(12.dp),
+                            fontSize = 14.sp,
+                            color = Color.Black
+                        )
+                    }
+                }
             }
         }
     }
@@ -254,12 +384,10 @@ fun StatisticsScreen(
 @Composable
 fun DailyStatsUI(dailyNutrition: DailyNutrition?, defaultTargetCalories: Double) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        // Daily Measurements - Using mock weight data for now
-        WeightMeasurementsCard(
-            title = "Daily Measurements",
-            predicted = "77.8 Kg",
-            actual = "77.8 Kg",
-            isDaily = true
+        // Daily Thoughts Card
+        ThoughtsCard(
+            title = "Today's Thoughts",
+            content = "How are you feeling about your nutrition journey today? Remember, every healthy choice counts!"
         )
 
         // Daily Tracker with real data
@@ -270,30 +398,64 @@ fun DailyStatsUI(dailyNutrition: DailyNutrition?, defaultTargetCalories: Double)
 @Composable
 fun WeeklyStatsUI(weeklyReport: WeeklyReport?, nutritionReport: NutritionReport?, defaultTargetCalories: Double) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        // Weekly Measurements - Using mock weight data for now
-        WeightMeasurementsCard(
-            title = "Weekly Measurements",
-            predicted = "77.8 Kg",
-            actual = "77.8 Kg",
-            isDaily = false
+        // Weekly Thoughts Card
+        ThoughtsCard(
+            title = "Weekly Reflection",
+            content = "This week has been a journey of growth. Keep building those healthy habits one day at a time!"
         )
 
         // Weekly Tracker with real data
         WeeklyTrackerCard(weeklyReport, nutritionReport, defaultTargetCalories)
+
+        // Nutrition Report Details
+        if (nutritionReport != null) {
+            NutritionReportCard(nutritionReport)
+        }
     }
 }
 
 @Composable
-fun WeightMeasurementsCard(
+fun CustomRangeStatsUI(nutritionReport: NutritionReport?, defaultTargetCalories: Double) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        // Custom Range Thoughts Card
+        ThoughtsCard(
+            title = "Your Progress",
+            content = "Looking at your custom date range gives you insights into your long-term progress. Stay consistent!"
+        )
+
+        // Nutrition Report Details
+        if (nutritionReport != null) {
+            NutritionReportCard(nutritionReport)
+        } else {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F8E9)),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No data available for the selected date range",
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ThoughtsCard(
     title: String,
-    predicted: String,
-    actual: String,
-    isDaily: Boolean
+    content: String
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp),
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F8E9)),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -312,126 +474,175 @@ fun WeightMeasurementsCard(
                     color = Color.Black
                 )
                 Icon(
-                    Icons.Default.OpenInFull,
-                    contentDescription = "Expand",
-                    tint = Color.Gray,
-                    modifier = Modifier.size(16.dp)
+                    Icons.Default.Psychology,
+                    contentDescription = "Thoughts",
+                    tint = Color(0xFF8BC34A),
+                    modifier = Modifier.size(20.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            Row {
-                Column {
-                    Text(
-                        text = "Weight",
-                        fontSize = 12.sp,
-                        color = Color.Gray
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Predicted",
-                        fontSize = 10.sp,
-                        color = Color.Gray
-                    )
-                    Text(
-                        text = predicted,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Actual",
-                        fontSize = 10.sp,
-                        color = Color.Gray
-                    )
-                    Text(
-                        text = actual,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                // Weight chart
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(120.dp)
-                ) {
-                    WeightLineChart(isDaily = isDaily)
-                }
-            }
+            Text(
+                text = content,
+                fontSize = 14.sp,
+                color = Color.Gray,
+                lineHeight = 20.sp
+            )
         }
     }
 }
 
 @Composable
-fun WeightLineChart(isDaily: Boolean) {
-    val data = if (isDaily) {
-        // Daily data for 24 hours - mock data
-        listOf(77.8f, 77.9f, 77.7f, 77.8f, 77.9f, 78.0f, 77.8f, 77.7f, 77.8f, 77.9f, 78.0f, 77.8f)
-    } else {
-        // Weekly data for 7 days - mock data
-        listOf(78.2f, 78.0f, 77.8f, 77.9f, 77.7f, 77.8f, 77.8f)
-    }
-
-    Canvas(
-        modifier = Modifier.fillMaxSize()
+fun NutritionReportCard(nutritionReport: NutritionReport) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F8E9)),
+        shape = RoundedCornerShape(12.dp)
     ) {
-        // Fix: Ensure all calculations use consistent Float types
-        val maxY = data.maxOrNull() ?: 78.5f
-        val minY = data.minOrNull() ?: 77.5f
-        val range = maxY - minY
-        val adjustedRange = if (range < 0.5f) 0.5f else range
-
-        val spacing = size.width / (data.size - 1).toFloat() // Fix: Convert to Float
-        val points = data.mapIndexed { index, value ->
-            val normalizedValue = (value - minY) / adjustedRange
-            Offset(
-                x = index.toFloat() * spacing, // Fix: Convert index to Float
-                y = size.height - (normalizedValue * size.height * 0.8f) - (size.height * 0.1f)
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                text = "Nutrition Report",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
             )
-        }
 
-        // Draw line
-        if (points.size > 1) {
-            val path = Path().apply {
-                moveTo(points.first().x, points.first().y)
-                for (i in 1 until points.size) {
-                    val cp1 = Offset(
-                        (points[i - 1].x + points[i].x) / 2f, // Fix: Use 2f instead of 2
-                        points[i - 1].y
-                    )
-                    val cp2 = Offset(
-                        (points[i - 1].x + points[i].x) / 2f, // Fix: Use 2f instead of 2
-                        points[i].y
-                    )
-                    cubicTo(cp1.x, cp1.y, cp2.x, cp2.y, points[i].x, points[i].y)
-                }
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "From ${nutritionReport.date_range.start} to ${nutritionReport.date_range.end}",
+                fontSize = 12.sp,
+                color = Color.Gray
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Totals Section
+            Text(
+                text = "Total Consumption",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.Black
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                NutritionCard(
+                    title = "Calories",
+                    value = "${nutritionReport.totals.calories}",
+                    unit = "kcal",
+                    modifier = Modifier.weight(1f)
+                )
+                NutritionCard(
+                    title = "Protein",
+                    value = "${nutritionReport.totals.protein}",
+                    unit = "g",
+                    modifier = Modifier.weight(1f)
+                )
+                NutritionCard(
+                    title = "Carbs",
+                    value = "${nutritionReport.totals.carbs}",
+                    unit = "g",
+                    modifier = Modifier.weight(1f)
+                )
+                NutritionCard(
+                    title = "Fat",
+                    value = "${nutritionReport.totals.fat}",
+                    unit = "g",
+                    modifier = Modifier.weight(1f)
+                )
             }
 
-            drawPath(
-                path = path,
-                color = Color(0xFFFFB74D),
-                style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
-            )
-        }
+            Spacer(modifier = Modifier.height(16.dp))
 
-        // Draw points
-        points.forEach { point ->
-            drawCircle(
-                color = Color(0xFFFFB74D),
-                center = point,
-                radius = 4.dp.toPx()
+            // Averages Section
+            Text(
+                text = "Daily Averages",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.Black
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                NutritionCard(
+                    title = "Calories",
+                    value = "${nutritionReport.averages.calories}",
+                    unit = "kcal",
+                    modifier = Modifier.weight(1f)
+                )
+                NutritionCard(
+                    title = "Protein",
+                    value = "${nutritionReport.averages.protein}",
+                    unit = "g",
+                    modifier = Modifier.weight(1f)
+                )
+                NutritionCard(
+                    title = "Carbs",
+                    value = "${nutritionReport.averages.carbs}",
+                    unit = "g",
+                    modifier = Modifier.weight(1f)
+                )
+                NutritionCard(
+                    title = "Fat",
+                    value = "${nutritionReport.averages.fat}",
+                    unit = "g",
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Summary Section
+            Text(
+                text = "Summary",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.Black
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Total Days: ${nutritionReport.date_range.total_days}",
+                fontSize = 12.sp,
+                color = Color.Gray
+            )
+
+            Text(
+                text = "Days with Logs: ${nutritionReport.date_range.days_with_data}",
+                fontSize = 12.sp,
+                color = Color.Gray
+            )
+
+            Text(
+                text = "Tracking Percentage: ${nutritionReport.summary.tracking_percentage.toInt()}%",
+                fontSize = 12.sp,
+                color = Color.Gray
+            )
+
+            // Show most active day if available
+            nutritionReport.summary.most_active_day?.let { mostActiveDay ->
+                Text(
+                    text = "Most Active Day: $mostActiveDay",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+            }
         }
     }
 }
-
 @Composable
 fun DailyTrackerCard(dailyNutrition: DailyNutrition?, targetCalories: Double) {
     val actualCalories = dailyNutrition?.total?.calories ?: 0
