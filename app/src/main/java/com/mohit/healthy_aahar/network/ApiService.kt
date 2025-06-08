@@ -43,7 +43,7 @@ interface ApiService {
     suspend fun getMealHistory(
         @Query("uid") uid: String,
         @Query("date") date: String? = null
-    ): Response<List<LoggedMeal>>
+    ): Response<List<MealHistoryResponse>>
 
     @GET("weekly_report/{uid}")
     suspend fun getWeeklyReport(@Path("uid") uid: String): Response<WeeklyReport>
