@@ -9,6 +9,6 @@ data class UserDetails(
     val height: Float,
     val activity_level: String,
     val goal: String,
-    val bmr: Float,
-    val tdee: Float
+    val bmr: Double?,
+    val tdee: Double?
 )
