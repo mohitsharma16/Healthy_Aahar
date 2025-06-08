@@ -344,38 +344,49 @@ fun ActivityLevelGrid(
     selectedLevel: String,
     onLevelSelected: (String) -> Unit
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        val levels = listOf(
-            "sedentary" to "Sedentary",
-            "light" to "Light",
-            "moderate" to "Moderate",
-            "active" to "Active"
-        )
+    val levels = listOf(
+        "sedentary" to "Sedentary",
+        "light" to "Light",
+        "moderate" to "Moderate",
+        "active" to "Active"
+    )
 
-        levels.forEach { (value, display) ->
-            Card(
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable { onLevelSelected(value) },
-                colors = CardDefaults.cardColors(
-                    containerColor = if (selectedLevel == value) Color(0xFF4CAF50) else Color.White
-                ),
-                border = BorderStroke(
-                    1.dp,
-                    if (selectedLevel == value) Color(0xFF4CAF50) else Color(0xFFE0E0E0)
-                ),
-                shape = RoundedCornerShape(12.dp)
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        for (row in levels.chunked(2)) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = display,
-                    modifier = Modifier.padding(16.dp),
-                    textAlign = TextAlign.Center,
-                    fontSize = 12.sp,
-                    color = if (selectedLevel == value) Color.White else Color(0xFF666666)
-                )
+                row.forEach { (value, display) ->
+                    Card(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { onLevelSelected(value) },
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (selectedLevel == value) Color(0xFF4CAF50) else Color.White
+                        ),
+                        border = BorderStroke(
+                            1.dp,
+                            if (selectedLevel == value) Color(0xFF4CAF50) else Color(0xFFE0E0E0)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = display,
+                            modifier = Modifier.padding(16.dp),
+                            textAlign = TextAlign.Center,
+                            fontSize = 12.sp,
+                            color = if (selectedLevel == value) Color.White else Color(0xFF666666)
+                        )
+                    }
+                }
+                // Add empty space if last row has only one item
+                if (row.size < 2) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
             }
         }
     }
