@@ -107,6 +107,7 @@ fun NutritionalAnalysisScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
+            .background(color = Color.White)
     ) {
         // Top header with back button and meal name
         Box(
