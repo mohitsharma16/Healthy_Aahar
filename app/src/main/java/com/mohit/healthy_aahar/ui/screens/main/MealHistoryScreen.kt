@@ -11,10 +11,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,11 +22,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.mohit.healthy_aahar.ui.theme.Primary600
 import com.mohit.healthy_aahar.ui.theme.Primary700
+import com.mohit.healthy_aahar.ui.viewmodel.MainViewModel
 
 data class MealItem(
     val id: Int,
@@ -36,34 +41,70 @@ data class MealItem(
     val protein: Int,
     val carbs: Int,
     val fats: Int,
-    val imageRes: Int, // You'll need to add actual image resources
-    val isFavorite: Boolean = false
+    val imageRes: Int,
+    val isFavorite: Boolean = false,
+    val date: String = "",
+    val mealId: String = ""
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MealHistoryScreen(navController: NavController) {
-    var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Breakfast", "Lunch", "Dinner")
+fun MealHistoryScreen(
+    navController: NavController,
+    uid: String,
+    viewModel: MainViewModel = viewModel()
+) {
+    // Observe meal history from ViewModel
+    val mealHistoryResponse by viewModel.mealHistoryResponse.observeAsState()
+    val isLoading by viewModel.isLoading.observeAsState(false)
+    val error by viewModel.error.observeAsState()
 
-    // Sample data - replace with your actual data source
-    val sampleMeals = listOf(
-        MealItem(1, "Scrambled Eggs", "Breakfast", 451, 25, 32, 14, android.R.drawable.ic_menu_gallery, true),
-        MealItem(2, "Scrambled Eggs", "Breakfast", 451, 25, 32, 14, android.R.drawable.ic_menu_gallery),
-        MealItem(3, "Scrambled Eggs", "Breakfast", 451, 25, 32, 14, android.R.drawable.ic_menu_gallery),
-        MealItem(4, "Grilled Chicken", "Lunch", 320, 35, 5, 12, android.R.drawable.ic_menu_gallery),
-        MealItem(5, "Caesar Salad", "Lunch", 280, 8, 15, 22, android.R.drawable.ic_menu_gallery),
-        MealItem(6, "Salmon Dinner", "Dinner", 420, 40, 8, 25, android.R.drawable.ic_menu_gallery),
-    )
+    // Tab state
+    var selectedTabIndex by remember { mutableStateOf(0) }
+    val tabs = listOf("All", "Breakfast", "Lunch", "Dinner", "Snacks")
 
-    val filteredMeals = sampleMeals.filter { meal ->
-        meal.mealType.equals(tabs[selectedTabIndex], ignoreCase = true)
+    // Fetch meal history when screen loads
+    LaunchedEffect(uid) {
+        viewModel.fetchMealHistory(uid)
+    }
+
+    // Convert MealHistoryResponse to MealItem for display
+    val allMealItems = remember(mealHistoryResponse) {
+        mealHistoryResponse?.flatMap { historyResponse ->
+            historyResponse.meals.map { meal ->
+                MealItem(
+                    id = meal.meal_id.hashCode(),
+                    name = meal.meal_name,
+                    mealType = meal.meal_type,
+                    calories = meal.calories,
+                    protein = meal.protein,
+                    carbs = meal.carbs,
+                    fats = meal.fat,
+                    imageRes = android.R.drawable.ic_menu_gallery,
+                    isFavorite = false,
+                    date = historyResponse.date,
+                    mealId = meal.meal_id
+                )
+            }
+        } ?: emptyList()
+    }
+
+    // Filter meals based on selected tab
+    val filteredMeals = remember(allMealItems, selectedTabIndex) {
+        when (selectedTabIndex) {
+            0 -> allMealItems // All
+            1 -> allMealItems.filter { it.mealType.equals("breakfast", ignoreCase = true) }
+            2 -> allMealItems.filter { it.mealType.equals("lunch", ignoreCase = true) }
+            3 -> allMealItems.filter { it.mealType.equals("dinner", ignoreCase = true) }
+            4 -> allMealItems.filter { it.mealType.equals("snack", ignoreCase = true) || it.mealType.equals("snacks", ignoreCase = true) }
+            else -> allMealItems
+        }
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Past Recipes", color = Color.White, fontWeight = FontWeight.Medium) },
+                title = { Text("Meal History", color = Color.White, fontWeight = FontWeight.Medium) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
@@ -74,7 +115,7 @@ fun MealHistoryScreen(navController: NavController) {
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Primary600 // Green color from the image
+                    containerColor = Primary600
                 )
             )
         }
@@ -83,17 +124,19 @@ fun MealHistoryScreen(navController: NavController) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(contentPadding)
+                .background(color = Color.White)
         ) {
-            // Tab Row
-            TabRow(
+            // Tab Row - Scrollable
+            ScrollableTabRow(
                 selectedTabIndex = selectedTabIndex,
                 containerColor = Color.White,
-                contentColor = Primary700,
+                contentColor = Primary600,
+                edgePadding = 16.dp,
                 indicator = { tabPositions ->
                     TabRowDefaults.Indicator(
-                        Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
+                        modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
                         color = Primary600,
-                        height = 4.dp
+                        height = 3.dp
                     )
                 }
             ) {
@@ -105,35 +148,122 @@ fun MealHistoryScreen(navController: NavController) {
                             Text(
                                 text = title,
                                 fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Normal,
-                                color = if (selectedTabIndex == index) Color(0xFF8BC34A) else Color.Gray
+                                color = if (selectedTabIndex == index) Primary600 else Color.Gray,
+                                fontSize = 14.sp
                             )
                         }
                     )
                 }
             }
 
-            // Meal List
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(filteredMeals) { meal ->
-                    MealCard(meal = meal)
+            // Content based on loading state
+            when {
+                isLoading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = Primary600)
+                    }
+                }
+                error != null -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Error loading meal history",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.Red
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = error ?: "Unknown error",
+                                fontSize = 14.sp,
+                                color = Color.Gray,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(
+                                onClick = { viewModel.fetchMealHistory(uid) },
+                                colors = ButtonDefaults.buttonColors(containerColor = Primary600)
+                            ) {
+                                Text("Retry", color = Color.White)
+                            }
+                        }
+                    }
+                }
+                filteredMeals.isEmpty() -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = if (selectedTabIndex == 0) "No meals logged yet" else "No ${tabs[selectedTabIndex].lowercase()} meals found",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.Gray
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = if (selectedTabIndex == 0) "Start logging your meals to see them here" else "Try selecting a different meal type",
+                                fontSize = 14.sp,
+                                color = Color.Gray,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(filteredMeals) { meal ->
+                            MealCard(
+                                meal = meal,
+                                onMealClick = { mealId ->
+                                    navController.navigate("nutritional_analysis/$mealId")
+                                }
+                            )
+                        }
+                    }
                 }
             }
+        }
+    }
+
+    // Clear error when leaving screen
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.clearMessages()
         }
     }
 }
 
 @Composable
-fun MealCard(meal: MealItem) {
+fun MealCard(
+    meal: MealItem,
+    onMealClick: (String) -> Unit = {},
+    modifier: Modifier = Modifier
+) {
     var isFavorite by remember { mutableStateOf(meal.isFavorite) }
 
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .height(120.dp),
+            .wrapContentHeight()
+            .clickable {
+                onMealClick(meal.mealId)
+            },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -142,7 +272,7 @@ fun MealCard(meal: MealItem) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
             // Meal Image
             Box(
@@ -151,7 +281,6 @@ fun MealCard(meal: MealItem) {
                     .clip(RoundedCornerShape(8.dp))
                     .background(Color(0xFFF5F5F5))
             ) {
-                // Replace with actual image loading (Coil, Glide, etc.)
                 Image(
                     painter = painterResource(id = meal.imageRes),
                     contentDescription = meal.name,
@@ -164,41 +293,68 @@ fun MealCard(meal: MealItem) {
 
             // Meal Info
             Column(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(bottom = 8.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.Top
                 ) {
-                    Column {
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
                         Text(
                             text = meal.name,
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp,
-                            color = Color.Black
+                            color = Color.Black,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
                         )
-                        Text(
-                            text = meal.mealType,
-                            fontSize = 12.sp,
-                            color = Color.Gray
-                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        // Show meal type badge
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = Primary600.copy(alpha = 0.1f),
+                            modifier = Modifier.padding(vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = meal.mealType.replaceFirstChar { it.uppercase() },
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Primary600,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
                         Text(
                             text = "${meal.calories} kcal",
                             fontSize = 12.sp,
                             color = Color.Gray
                         )
+                        if (meal.date.isNotEmpty()) {
+                            Text(
+                                text = meal.date,
+                                fontSize = 11.sp,
+                                color = Color.Gray
+                            )
+                        }
                     }
 
                     // Favorite Icon
                     IconButton(
                         onClick = { isFavorite = !isFavorite },
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(32.dp)
                     ) {
                         Icon(
                             imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                             contentDescription = "Favorite",
-                            tint = if (isFavorite) Color(0xFF8BC34A) else Color.Gray,
+                            tint = if (isFavorite) Primary600 else Color.Gray,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -213,17 +369,17 @@ fun MealCard(meal: MealItem) {
                     NutritionItem(
                         value = "${meal.protein}g",
                         label = "Protein",
-                        color = Color(0xFF8BC34A)
+                        color = Primary600
                     )
                     NutritionItem(
                         value = "${meal.carbs}g",
                         label = "Carbs",
-                        color = Color(0xFF8BC34A)
+                        color = Primary600
                     )
                     NutritionItem(
                         value = "${meal.fats}g",
                         label = "Fats",
-                        color = Color(0xFF8BC34A)
+                        color = Primary600
                     )
                 }
             }
