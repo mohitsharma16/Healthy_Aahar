@@ -40,6 +40,7 @@ import com.mohit.healthy_aahar.ui.viewmodel.MainViewModel
 import com.mohit.healthy_aahar.model.DailyNutrition
 import com.mohit.healthy_aahar.model.WeeklyReport
 import com.mohit.healthy_aahar.model.NutritionReport
+import com.mohit.healthy_aahar.ui.theme.Primary50
 import kotlin.math.*
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -246,13 +247,14 @@ fun StatisticsScreen(
             // Period Selector Dropdown
             ExposedDropdownMenuBox(
                 expanded = isDropdownExpanded,
+
                 onExpandedChange = { isDropdownExpanded = !isDropdownExpanded }
             ) {
                 OutlinedTextField(
                     value = selectedPeriod,
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Select Period") },
+                    label = { Text("Select Period" , color = Color.Black) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .menuAnchor(),
@@ -267,6 +269,7 @@ fun StatisticsScreen(
 
                 ExposedDropdownMenu(
                     expanded = isDropdownExpanded,
+                    containerColor = Primary50,
                     onDismissRequest = { isDropdownExpanded = false }
                 ) {
                     periods.forEach { period ->
