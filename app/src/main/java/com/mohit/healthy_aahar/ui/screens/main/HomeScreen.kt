@@ -425,14 +425,48 @@ fun NutritionTrackerCard(
 }
 
 // Updated TodaysMealsSection with callback for meal consumption
+// Updated TodaysMealsSectionWithSkeleton function
 @Composable
 fun TodaysMealsSectionWithSkeleton(
     navController: NavController,
     meals: List<Meal>,
     isLoading: Boolean = false,
     onMealConsumed: () -> Unit = {},
-    viewModel: MainViewModel = viewModel() // Add viewModel parameter
+    viewModel: MainViewModel = viewModel()
 ) {
+    val context = LocalContext.current
+    val uidFlow = remember { UserPreference.getUidFlow(context) }
+    val uid by uidFlow.collectAsState(initial = null)
+
+    // Observe swap meal responses
+    val registerResponse by viewModel.registerResponse.observeAsState()
+    val error by viewModel.error.observeAsState()
+
+    // Handle swap meal response
+    LaunchedEffect(registerResponse) {
+        registerResponse?.let { response ->
+            if (response.contains("swapped successfully", ignoreCase = true)) {
+                // Refresh meal plan after successful swap
+                uid?.let { userId ->
+                    viewModel.getMealPlan(userId)
+                }
+                // Also refresh nutrition data
+                onMealConsumed()
+            }
+            viewModel.clearMessages()
+        }
+    }
+
+    LaunchedEffect(error) {
+        error?.let { errorMsg ->
+            if (errorMsg.contains("Swap failed", ignoreCase = true)) {
+                // Show error message to user (you can implement a toast or snackbar)
+                Log.e("MEAL_SWAP", "Swap failed: $errorMsg")
+            }
+            viewModel.clearMessages()
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -481,7 +515,7 @@ fun TodaysMealsSectionWithSkeleton(
             }
             else -> {
                 Column {
-                    meals.forEach { meal ->
+                    meals.forEachIndexed { index, meal ->
                         MealCard(
                             mealName = meal.TranslatedRecipeName,
                             mealTime = "",
@@ -495,15 +529,20 @@ fun TodaysMealsSectionWithSkeleton(
                             },
                             onMealConsumed = onMealConsumed,
                             onSwapMeal = {
-                                // Call the swap meal function from your existing code
-                                // You mentioned you already have swap meal code, so call it here
-                                // For example: viewModel.swapMeal(meal._id)
-                                Log.d("MEAL_SWAP", "Swapping meal: ${meal.TranslatedRecipeName}")
-                                // Add your swap meal logic here
+                                uid?.let { userId ->
+                                    Log.d("MEAL_SWAP", "Swapping meal at index: $index for meal: ${meal.TranslatedRecipeName}")
+                                    viewModel.swapMeal(userId, index) { success ->
+                                        if (success) {
+                                            Log.d("MEAL_SWAP", "Swap initiated successfully")
+                                        } else {
+                                            Log.e("MEAL_SWAP", "Swap initiation failed")
+                                        }
+                                    }
+                                }
                             },
                             onRecipeGenerator = {
                                 // Navigate to recipe generator screen
-                                navController.navigate(Screen.RecipeGenerator.route) // Update with your actual route
+                                navController.navigate(Screen.RecipeGenerator.route)
                             }
                         )
                         Spacer(modifier = Modifier.height(12.dp))
@@ -514,6 +553,7 @@ fun TodaysMealsSectionWithSkeleton(
     }
 }
 
+// Add a loading state to MealCard for better UX during swap
 @Composable
 fun MealCard(
     mealName: String,
@@ -526,17 +566,18 @@ fun MealCard(
     onClick: () -> Unit,
     onMealConsumed: () -> Unit = {},
     onSwapMeal: () -> Unit = {},
-    onRecipeGenerator: () -> Unit = {}
+    onRecipeGenerator: () -> Unit = {},
+    isSwapping: Boolean = false // Add this parameter
 ) {
     var showDropdownMenu by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() },
+            .clickable { if (!isSwapping) onClick() }, // Disable click during swap
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFF8FCF8) // Very light green background
+            containerColor = if (isSwapping) Color(0xFFF0F0F0) else Color(0xFFF8FCF8)
         ),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
@@ -547,15 +588,34 @@ fun MealCard(
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Meal Image
-                Image(
-                    painter = painterResource(id = imageRes),
-                    contentDescription = mealName,
-                    modifier = Modifier
-                        .size(60.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop
-                )
+                // Meal Image with loading overlay
+                Box {
+                    Image(
+                        painter = painterResource(id = imageRes),
+                        contentDescription = mealName,
+                        modifier = Modifier
+                            .size(60.dp)
+                            .clip(RoundedCornerShape(8.dp)),
+                        contentScale = ContentScale.Crop,
+                        alpha = if (isSwapping) 0.5f else 1f
+                    )
+
+                    if (isSwapping) {
+                        Box(
+                            modifier = Modifier
+                                .size(60.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color.Black.copy(alpha = 0.3f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = LightGreen,
+                                strokeWidth = 2.dp
+                            )
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.width(12.dp))
 
@@ -563,9 +623,10 @@ fun MealCard(
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(
-                        text = mealName,
+                        text = if (isSwapping) "Swapping meal..." else mealName,
                         fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
+                        color = if (isSwapping) Color.Gray else Color.Black
                     )
 
                     Text(
@@ -580,15 +641,15 @@ fun MealCard(
                     Icon(
                         imageVector = Icons.Filled.MoreVert,
                         contentDescription = "Options",
-                        tint = Color.Gray,
+                        tint = if (isSwapping) Color.LightGray else Color.Gray,
                         modifier = Modifier
-                            .clickable { showDropdownMenu = true }
+                            .clickable(enabled = !isSwapping) { showDropdownMenu = true }
                             .padding(4.dp)
                             .background(color = Color.White)
                     )
 
                     DropdownMenu(
-                        expanded = showDropdownMenu,
+                        expanded = showDropdownMenu && !isSwapping,
                         containerColor = Primary50,
                         onDismissRequest = { showDropdownMenu = false }
                     ) {
@@ -600,7 +661,7 @@ fun MealCard(
                             },
                             leadingIcon = {
                                 Icon(
-                                    imageVector = Icons.Default.SwapHoriz, // You'll need to add this icon
+                                    imageVector = Icons.Default.SwapHoriz,
                                     contentDescription = "Swap Meal",
                                     tint = Primary800
                                 )
@@ -615,7 +676,7 @@ fun MealCard(
                             },
                             leadingIcon = {
                                 Icon(
-                                    imageVector = Icons.Default.Restaurant, // You'll need to add this icon
+                                    imageVector = Icons.Default.Restaurant,
                                     contentDescription = "Recipe Generator",
                                     tint = Primary800
                                 )
@@ -662,6 +723,8 @@ fun MealCard(
         }
     }
 }
+
+
 @Composable
 fun MealCardSkeleton() {
     Card(
