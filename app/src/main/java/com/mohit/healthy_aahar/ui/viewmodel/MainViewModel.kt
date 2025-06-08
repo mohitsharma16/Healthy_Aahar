@@ -13,6 +13,7 @@ import com.mohit.healthy_aahar.model.IngredientRecipeRequest
 import com.mohit.healthy_aahar.model.LogMealRequest
 import com.mohit.healthy_aahar.model.LoggedMeal
 import com.mohit.healthy_aahar.model.Meal
+import com.mohit.healthy_aahar.model.MealHistoryResponse
 import com.mohit.healthy_aahar.model.MealPlanResponse
 import com.mohit.healthy_aahar.model.NutritionReport
 import com.mohit.healthy_aahar.model.RecipeDetails
@@ -32,6 +33,10 @@ class MainViewModel : ViewModel() {
 
     private val _mealPlan = MutableLiveData<MealPlanResponse>()
     val mealPlan: LiveData<MealPlanResponse> get() = _mealPlan
+
+    private val _mealHistoryResponse = MutableLiveData<List<MealHistoryResponse>?>()
+    val mealHistoryResponse: LiveData<List<MealHistoryResponse>?> get() = _mealHistoryResponse
+
 
     private val _isLoading = MutableLiveData(false)
     val isLoading: LiveData<Boolean> get() = _isLoading
@@ -347,7 +352,7 @@ class MainViewModel : ViewModel() {
 
                 val response = api.getMealHistory(uid, date)
                 if (response.isSuccessful) {
-                    _mealHistory.value = response.body()
+                    _mealHistoryResponse.value = response.body()
                     Log.d("API", "Meal history received: ${response.body()}")
                 } else {
                     val errorText = response.errorBody()?.string()
