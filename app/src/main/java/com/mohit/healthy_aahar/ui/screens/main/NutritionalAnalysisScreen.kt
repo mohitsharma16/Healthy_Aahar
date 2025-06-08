@@ -1,5 +1,6 @@
 package com.mohit.healthy_aahar.ui.screens.main
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -41,9 +42,14 @@ fun NutritionalAnalysisScreen(
     val error by viewModel.error.observeAsState()
 
     // Fetch recipe details when screen loads
+    Log.d("NutritionalAnalysis", "Received recipeId: '$recipeId'")
+
     LaunchedEffect(recipeId) {
         if (recipeId.isNotEmpty()) {
+            Log.d("NutritionalAnalysis", "Making API call for recipeId: $recipeId")
             viewModel.getRecipeDetails(recipeId)
+        } else {
+            Log.e("NutritionalAnalysis", "RecipeId is empty!")
         }
     }
 
