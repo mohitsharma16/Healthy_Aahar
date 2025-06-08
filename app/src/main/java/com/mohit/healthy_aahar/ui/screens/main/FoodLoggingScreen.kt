@@ -1,6 +1,7 @@
 package com.mohit.healthy_aahar.ui.screens.main
 
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -67,7 +68,9 @@ fun FoodLoggingScreen(navController: NavController) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(contentPadding)
+                .background(color = Color.White)
                 .padding(horizontal = 24.dp, vertical = 16.dp),
+
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Header Text
