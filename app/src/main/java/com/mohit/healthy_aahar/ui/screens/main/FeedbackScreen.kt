@@ -89,6 +89,7 @@ fun FeedbackScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(contentPadding)
+                .background(color = Color.White)
         ) {
             // Top Bar with green background
             Box(
