@@ -16,26 +16,58 @@ import androidx.compose.material.icons.outlined.Receipt
 import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.google.firebase.auth.FirebaseAuth
 import com.mohit.healthy_aahar.R
 import com.mohit.healthy_aahar.ui.navigation.Screen
+import com.mohit.healthy_aahar.ui.viewmodel.MainViewModel
+import com.mohit.healthy_aahar.datastore.UserPreference
+import kotlinx.coroutines.launch
 
 @Composable
 fun AppDrawerContent(
     onNavigate: (String) -> Unit,
-    onLogout: () -> Unit = {} // Add logout callback parameter
+    onLogout: () -> Unit = {},
+    viewModel: MainViewModel // Add viewModel parameter
 ) {
     var showLogoutDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    // Observe user details from ViewModel
+    val userDetails by viewModel.userDetails.observeAsState()
+
+    // Get current user's UID
+    val currentUser = FirebaseAuth.getInstance().currentUser
+    val uid = currentUser?.uid
+
+    // Fetch user details when drawer opens
+    LaunchedEffect(uid) {
+        uid?.let { userId ->
+            viewModel.fetchUserDetails(userId) { name ->
+                // User details will be updated in the LiveData
+            }
+        }
+    }
+
+    // Get user name from multiple sources with fallback
+    val userName = when {
+        userDetails?.name?.isNotBlank() == true -> userDetails?.name
+        currentUser?.displayName?.isNotBlank() == true -> currentUser.displayName
+        else -> "User" // Fallback
+    }
 
     // Main container that prevents clicks from propagating
     Box(
@@ -73,7 +105,7 @@ fun AppDrawerContent(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                "Mohit",
+                                text = userName ?: "Loading...",
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF2E7D32)
@@ -125,7 +157,6 @@ fun AppDrawerContent(
                         "Log Recipes",
                         onClick = { onNavigate(Screen.FoodLogging.route) }
                     )
-
                 }
             }
 
