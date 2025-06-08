@@ -584,10 +584,12 @@ fun MealCard(
                         modifier = Modifier
                             .clickable { showDropdownMenu = true }
                             .padding(4.dp)
+                            .background(color = Color.White)
                     )
 
                     DropdownMenu(
                         expanded = showDropdownMenu,
+                        containerColor = Primary50,
                         onDismissRequest = { showDropdownMenu = false }
                     ) {
                         DropdownMenuItem(
