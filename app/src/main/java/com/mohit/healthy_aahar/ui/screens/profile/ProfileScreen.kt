@@ -163,7 +163,7 @@ fun ProfileScreen(navController: NavController, onSignOut: () -> Unit = {}) {
                     )
                     StatItem(
                         label = "BMR",
-                        value = "${userDetails?.bmr ?: "N/A"}" // Calculate BMI or get from userDetails
+                        value = "${userDetails?.bmr?.toInt() ?: "N/A"}" // Calculate BMI or get from userDetails
                     )
                 }
             }
