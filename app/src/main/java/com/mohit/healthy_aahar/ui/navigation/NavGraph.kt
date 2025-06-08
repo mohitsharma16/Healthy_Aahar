@@ -80,7 +80,13 @@ fun AppNavGraph(
             RecipeGeneratorScreen(navController, onMenuClick)
         }
         composable(Screen.MealHistory.route) {
-            MealHistoryScreen(navController)
+            val currentUser = authRepository.getCurrentUser()
+            val uid = currentUser?.uid ?: ""
+            MealHistoryScreen(
+                navController,
+                uid = uid,
+                viewModel = viewModel,
+            )
         }
         composable(Screen.StatisticsScreen.route) {
             val currentUser = authRepository.getCurrentUser()
@@ -92,13 +98,13 @@ fun AppNavGraph(
             FoodLoggingScreen(navController)
         }
         composable(
-            route = "nutritional_analysis/{recipeId}",
-            arguments = listOf(navArgument("recipeId") { type = NavType.StringType })
+            route = "nutritional_analysis/{mealId}",
+            arguments = listOf(navArgument("mealId") { type = NavType.StringType })
         ) { backStackEntry ->
-            val recipeId = backStackEntry.arguments?.getString("recipeId") ?: ""
+            val mealId = backStackEntry.arguments?.getString("mealId") ?: ""
             NutritionalAnalysisScreen(
                 navController = navController,
-                recipeId = recipeId
+                recipeId = mealId // Pass mealId as recipeId to your screen
             )
         }
 
