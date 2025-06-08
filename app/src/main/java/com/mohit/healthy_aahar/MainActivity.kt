@@ -106,7 +106,8 @@ class MainActivity : ComponentActivity() {
                         onLogout = {
                             isDrawerOpen = false // Close drawer first
                             handleLogout() // Then handle logout
-                        }
+                        },
+                        viewModel = mainViewModel // Pass the viewModel to AppDrawerContent
                     )
                 }
             }
