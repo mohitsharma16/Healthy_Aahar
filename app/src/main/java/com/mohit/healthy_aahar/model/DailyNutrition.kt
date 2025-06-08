@@ -1,5 +1,7 @@
 package com.mohit.healthy_aahar.model
 
+import java.util.Date
+
 data class DailyNutrition(
     val uid: String,
     val date: String,
@@ -10,10 +12,12 @@ data class DailyNutrition(
 data class LoggedMeal(
     val meal_id: String,
     val meal_name: String,
+    val meal_type: String,
     val calories: Int,
     val protein: Int,
     val fat: Int,
-    val carbs: Int
+    val carbs: Int,
+    val date: String,
 )
 
 data class NutritionTotals(
@@ -23,6 +27,32 @@ data class NutritionTotals(
     val carbs: Int
 )
 
+// Add these data classes to your model package
+
+data class MealHistoryResponse(
+    val _id: String,
+    val uid: String,
+    val date: String,
+    val meals: List<MealHistoryItem>,
+    val total: NutritionTotal
+)
+
+data class MealHistoryItem(
+    val meal_id: String,
+    val meal_name: String,
+    val meal_type: String,
+    val calories: Int,
+    val protein: Int,
+    val fat: Int,
+    val carbs: Int
+)
+
+data class NutritionTotal(
+    val calories: Int,
+    val protein: Int,
+    val fat: Int,
+    val carbs: Int
+)
 
 
 
