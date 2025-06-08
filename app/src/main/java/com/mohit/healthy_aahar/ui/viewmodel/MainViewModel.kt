@@ -135,12 +135,12 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun swapMeal(userName: String, index: Int,onResult: (Boolean) -> Unit) {
+    fun swapMeal(uid: String, index: Int,onResult: (Boolean) -> Unit) {
 
         viewModelScope.launch {
             try {
-                Log.d("API", "Swapping meal at index $index for $userName")
-                val response = api.swapMeal(userName, SwapMealRequest(index))
+                Log.d("API", "Swapping meal at index $index for $uid")
+                val response = api.swapMeal(uid, SwapMealRequest(index))
                 Log.d("API", "Swap response code: ${response.code()}")
 
                 if (response.isSuccessful) {
