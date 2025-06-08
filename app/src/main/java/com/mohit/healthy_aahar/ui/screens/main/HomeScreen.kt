@@ -14,6 +14,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.Notifications
@@ -45,6 +47,7 @@ import com.mohit.healthy_aahar.ui.theme.GreenBackground
 import com.mohit.healthy_aahar.ui.theme.LightGreen
 import com.mohit.healthy_aahar.ui.theme.Primary200
 import com.mohit.healthy_aahar.ui.theme.Primary50
+import com.mohit.healthy_aahar.ui.theme.Primary800
 import com.mohit.healthy_aahar.ui.viewmodel.MainViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -101,9 +104,9 @@ fun HomeScreen(navController: NavController, onMenuClick: () -> Unit, viewModel:
             navController = navController,
             meals = mealPlan?.meal_plan ?: emptyList(),
             isLoading = isLoading,
-            onMealConsumed = { refreshNutritionData() } // Refresh when meal is consumed
+            onMealConsumed = { refreshNutritionData() },
+            viewModel = viewModel // Pass the viewModel
         )
-
         // Bottom Navigation Spacer (to account for the bottom nav bar)
         Spacer(modifier = Modifier.height(80.dp))
     }
@@ -427,7 +430,8 @@ fun TodaysMealsSectionWithSkeleton(
     navController: NavController,
     meals: List<Meal>,
     isLoading: Boolean = false,
-    onMealConsumed: () -> Unit = {} // Callback when meal is consumed
+    onMealConsumed: () -> Unit = {},
+    viewModel: MainViewModel = viewModel() // Add viewModel parameter
 ) {
     Column(
         modifier = Modifier
@@ -489,7 +493,18 @@ fun TodaysMealsSectionWithSkeleton(
                             onClick = {
                                 navController.navigate("${Screen.NutritionalAnalysis.route}/${meal._id}")
                             },
-                            onMealConsumed = onMealConsumed // Pass the callback
+                            onMealConsumed = onMealConsumed,
+                            onSwapMeal = {
+                                // Call the swap meal function from your existing code
+                                // You mentioned you already have swap meal code, so call it here
+                                // For example: viewModel.swapMeal(meal._id)
+                                Log.d("MEAL_SWAP", "Swapping meal: ${meal.TranslatedRecipeName}")
+                                // Add your swap meal logic here
+                            },
+                            onRecipeGenerator = {
+                                // Navigate to recipe generator screen
+                                navController.navigate(Screen.RecipeGenerator.route) // Update with your actual route
+                            }
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                     }
@@ -509,8 +524,12 @@ fun MealCard(
     fats: String,
     imageRes: Int,
     onClick: () -> Unit,
-    onMealConsumed: () -> Unit = {} // Add callback parameter
+    onMealConsumed: () -> Unit = {},
+    onSwapMeal: () -> Unit = {},
+    onRecipeGenerator: () -> Unit = {}
 ) {
+    var showDropdownMenu by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -556,11 +575,52 @@ fun MealCard(
                     )
                 }
 
-                Icon(
-                    imageVector = Icons.Filled.MoreVert,
-                    contentDescription = "Options",
-                    tint = Color.Gray
-                )
+                // Three dots menu with dropdown
+                Box {
+                    Icon(
+                        imageVector = Icons.Filled.MoreVert,
+                        contentDescription = "Options",
+                        tint = Color.Gray,
+                        modifier = Modifier
+                            .clickable { showDropdownMenu = true }
+                            .padding(4.dp)
+                    )
+
+                    DropdownMenu(
+                        expanded = showDropdownMenu,
+                        onDismissRequest = { showDropdownMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Swap Meal") },
+                            onClick = {
+                                showDropdownMenu = false
+                                onSwapMeal()
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.SwapHoriz, // You'll need to add this icon
+                                    contentDescription = "Swap Meal",
+                                    tint = Primary800
+                                )
+                            }
+                        )
+
+                        DropdownMenuItem(
+                            text = { Text("Recipe Generator") },
+                            onClick = {
+                                showDropdownMenu = false
+                                onRecipeGenerator()
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Restaurant, // You'll need to add this icon
+                                    contentDescription = "Recipe Generator",
+                                    tint = Primary800
+                                )
+                            }
+                        )
+                    }
+                }
             }
 
             if (calories.isNotEmpty()) {
@@ -600,7 +660,6 @@ fun MealCard(
         }
     }
 }
-
 @Composable
 fun MealCardSkeleton() {
     Card(
@@ -715,7 +774,7 @@ fun NutrientInfo(label: String, value: String) {
 }
 
 @Composable
-fun MealSwapTestScreen(userName: String) {
+fun MealSwapTestScreen(uid: String) {
     val viewModel: MainViewModel = viewModel()
     val registerResponse by viewModel.registerResponse.observeAsState()
     val error by viewModel.error.observeAsState()
