@@ -8,7 +8,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -34,6 +33,7 @@ import java.nio.channels.FileChannel
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import com.mohit.healthy_aahar.ui.theme.Primary800
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -217,8 +217,8 @@ fun UserSetupScreen(onSetupComplete: () -> Unit) {
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Forward Arrow Button (Calculate & Show Modal)
-        Button(
+        // Forward Arrow Button (Calculate & Show Modal) - Fixed Version
+        FilledIconButton(
             onClick = {
                 if (firstName.isNotEmpty() && lastName.isNotEmpty() && age.isNotEmpty() &&
                     gender.isNotEmpty() && weight.isNotEmpty() && height.isNotEmpty()) {
@@ -228,14 +228,16 @@ fun UserSetupScreen(onSetupComplete: () -> Unit) {
                     Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT).show()
                 }
             },
-            modifier = Modifier
-                .size(56.dp),
-            shape = CircleShape,
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+            modifier = Modifier.size(56.dp),
+            colors = IconButtonDefaults.filledIconButtonColors(
+                containerColor = Color(0xFF4CAF50),
+                contentColor = Color.White
+            )
         ) {
             Icon(
+                modifier = Modifier.size(24.dp),
                 imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = "Next",
+                contentDescription = "Next"
             )
         }
     }
@@ -279,8 +281,8 @@ fun UserSetupScreen(onSetupComplete: () -> Unit) {
                         modifier = Modifier.padding(bottom = 32.dp)
                     )
 
-                    // Submit Arrow Button in Modal
-                    Button(
+                    // Submit Arrow Button in Modal - Fixed Version
+                    FilledIconButton(
                         onClick = {
                             showCalorieModal = false
                             if (uid != null) {
@@ -304,12 +306,15 @@ fun UserSetupScreen(onSetupComplete: () -> Unit) {
                             }
                         },
                         modifier = Modifier.size(56.dp),
-                        shape = CircleShape,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+                        colors = IconButtonDefaults.filledIconButtonColors(
+                            containerColor = Color.White,
+                            contentColor = Primary800
+                        )
                     ) {
                         Icon(
+                            modifier = Modifier.size(24.dp),
                             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = "Next",
+                            contentDescription = "Next"
                         )
                     }
                 }
