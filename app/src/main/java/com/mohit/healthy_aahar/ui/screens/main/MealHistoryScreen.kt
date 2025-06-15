@@ -68,14 +68,16 @@ fun MealHistoryScreen(
         viewModel.fetchMealHistory(uid)
     }
 
-    // Convert MealHistoryResponse to MealItem for display
+    // Replace the allMealItems computation section (around line 70-85) with this:
+
+// Convert MealHistoryResponse to MealItem for display
     val allMealItems = remember(mealHistoryResponse) {
         mealHistoryResponse?.flatMap { historyResponse ->
             historyResponse.meals.map { meal ->
                 MealItem(
-                    id = meal.meal_id.hashCode(),
+                    id = meal.meal_id?.hashCode() ?: meal.meal_name.hashCode(), // Handle null meal_id
                     name = meal.meal_name,
-                    mealType = meal.meal_type,
+                    mealType = meal.meal_type ?: "Unknown", // Handle null meal_type
                     calories = meal.calories,
                     protein = meal.protein,
                     carbs = meal.carbs,
@@ -83,7 +85,7 @@ fun MealHistoryScreen(
                     imageRes = android.R.drawable.ic_menu_gallery,
                     isFavorite = false,
                     date = historyResponse.date,
-                    mealId = meal.meal_id
+                    mealId = meal.meal_id ?: meal.meal_name // Use meal_name as fallback for mealId
                 )
             }
         } ?: emptyList()
